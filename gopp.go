@@ -1,13 +1,13 @@
 package gopp
 
 type Grammar struct {
-	Rules []Rule
-	Symbols []Symbol
+	Rules []*Rule
+	Symbols []*Symbol
 }
 
 type Rule struct {
 	Name string
-	Expr Expr
+	Expr *Expr
 }
 
 type Symbol struct {
@@ -16,7 +16,7 @@ type Symbol struct {
 }
 
 type Expr struct {
-	Terms []Term
+	Terms []*Term
 }
 
 type Term struct {
@@ -29,30 +29,112 @@ type Term struct {
 }
 
 var ByHandGrammar = Grammar{
-	Rules: []Rule{
-		Rule{
+	Rules: []*Rule{
+		&Rule{ // Grammar => Rules=<<Rule>>+ Symbols=<<Symbol>>+
 			Name: "Grammar",
-			Expr: Expr{
-				Terms: []Term{
-					Term{
+			Expr: &Expr{ // Rules=<<Rule>>+ Symbols=<<Symbol>>+
+				Terms: []*Term{
+					&Term{ // Rules=<<Rule>>+
 						Operator: "=",
 						Field: "Rules",
-						Term: &Term{
+						Term: &Term{ // <<Rule>>+
 							Operator: "+",
-							Term: &Term{
+							Term: &Term{ // <<Rule>>
 								Operator: "<<",
 								Name: "Rule",
 							},
 						},
 					},
-					Term{
+					&Term{ // Symbols=<<Symbol>>+
 						Operator: "=",
 						Field: "Symbols",
-						Term: &Term{
+						Term: &Term{ // <<Symbol>>+
 							Operator: "+",
-							Term: &Term{
+							Term: &Term{ // <<Symbol>>
 								Operator: "<<",
 								Name: "Symbol",
+							},
+						},
+					},
+				},
+			},
+		},
+		&Rule{ // Rule => Name=<identifier> '=>' Expr=<<Expr>> '\n'+
+			Name: "Rule",
+			Expr: &Expr{ // Name=<identifier> '=>' Expr=<<Expr>> '\n'+
+				Terms: []*Term{
+					&Term{ // Name=<identifier>
+						Operator: "=",
+						Field: "Name",
+						Term: &Term { // <identifier>
+							Operator: "<",
+							Name: "identifier",
+						},
+					},
+					&Term{ // '=>'
+						Literal: "=>",
+					},
+					&Term{ // Expr=<<Expr>>
+						Operator: "=",
+						Field: "Expr",
+						Term: &Term { // <<Expr>>
+							Operator: "<<",
+							Name: "Expr",
+						},
+					},
+					&Term{ // '\n'+
+						Operator: "+",
+						Term: &Term{ // '\n'
+							Literal: "\n",
+						},
+					},
+				},
+			},
+		},
+		&Rule{ // Symbol => Name=<identifier> '=' Pattern=<regexp> '\n'+
+			Name: "Symbol",
+			Expr: &Expr{ // Name=<identifier> '=' Pattern=<regexp> '\n'+
+				Terms: []*Term{
+					&Term{ // Name=<identifier>
+						Operator: "=",
+						Field: "Name",
+						Term: &Term { // <identifier>
+							Operator: "<",
+							Name: "identifier",
+						},
+					},
+					&Term{ // '='
+						Literal: "=",
+					},
+					&Term{ // Pattern=<regexp>
+						Operator: "=",
+						Field: "Pattern",
+						Term: &Term { // <regexp>
+							Operator: "<",
+							Name: "regexp",
+						},
+					},
+					&Term{ // '\n'+
+						Operator: "+",
+						Term: &Term{ // '\n'
+							Literal: "\n",
+						},
+					},
+				},
+			},
+		},
+		&Rule{ // Expr => Terms=<<Term>>+
+			Name: "Expr",
+			Expr: &Expr{
+				Terms: []*Term{
+					&Term{ // Terms=<<Term>>+
+						Operator: "=",
+						Field: "Terms",
+						Term: &Term{ // <<Term>>+
+							Operator: "+",
+							Term: &Term{ // <<Term>>
+								Operator: "<<",
+								Name: "Term",
 							},
 						},
 					},
