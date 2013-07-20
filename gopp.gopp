@@ -1,4 +1,3 @@
-
 Grammar => Rules=<<Rule>>+ Symbols=<<Symbol>>+
 
 Rule => Name=<identifier> '=>' Expr=<<Expr>> '\n'+
@@ -11,13 +10,13 @@ Term => Term=<<Term>> Operator='*'
 Term => Term=<<Term>> Operator='+'
 Term => Operator='[' Expr=<<Expr>> ']'
 Term => Operator='(' Expr=<<Expr>> ')'
-Term => Operator='<<' Name=<<identifier>> '>>'
+Term => Operator='<<' Name=<identifier> '>>'
 Term => Operator='<' Name=<identifier> '>'
 Term => Field=<indentifier> Operator='=' Term=<<Term>>
 Term => Literal=<literal>
 
-identifier = [a-zA-Z][a-zA-Z0-9_]*
+identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
 
-literal = '([\\']|[^'])+'
+literal = /'((?:[\\']|[^'])+?)'/
 
-regexp = [^\n]+
+regexp = /\/((?:\\/|[^\n])+?)\//
