@@ -1,0 +1,23 @@
+
+Document => Rules=<<Rule>>+ Symbols=<<Symbol>>+
+
+Rule => Name=<identifier> '=>' Expr=<<Expr>> '\n'
+
+Symbol => Name=<identifier> '=' Pattern=<regexp> '\n'
+
+Expr => Terms=<<Term>>+
+
+Term => Term=<<Term>> Operator='*'
+Term => Term=<<Term>> Operator='+'
+Term => Operator='[' Expr=<<Expr>> ']'
+Term => Operator='(' Expr=<<Expr>> ')'
+Term => Operator='<<' <<identifier>> '>>'
+Term => Operator='<' <identifier> '>'
+Term => <indentifier> Operator='=' Term=<<Term>>
+Term => <literal>
+
+identifier = [a-zA-Z][a-zA-Z0-9_]*
+
+literal = '([\\']|[^'])+'
+
+regexp = [^\n]+
