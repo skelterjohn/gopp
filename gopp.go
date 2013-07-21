@@ -8,18 +8,18 @@ import (
 const REGEXP_PREFIX = `^(?:\s)*`
 
 type Grammar struct {
-	Rules   []*Rule
-	Symbols []*Symbol
+	Rules   []Rule
+	Symbols []Symbol
 }
 
-func (g *Grammar) CollectLiterals(literals map[string]bool) {
+func (g Grammar) CollectLiterals(literals map[string]bool) {
 	for _, rule := range g.Rules {
 		rule.CollectLiterals(literals)
 	}
 	return
 }
 
-func (g *Grammar) TokenREs() (res []*regexp.Regexp, err error) {
+func (g Grammar) TokenREs() (res []*regexp.Regexp, err error) {
 	// first get all the literals, and sort them longest first (so smaller ones don't eat larger ones).
 	literals := map[string]bool{}
 	g.CollectLiterals(literals)
@@ -48,12 +48,7 @@ func (g *Grammar) TokenREs() (res []*regexp.Regexp, err error) {
 
 type Rule struct {
 	Name string
-	Expr *Expr
-}
-
-func (r *Rule) CollectLiterals(literals map[string]bool) {
-	r.Expr.CollectLiterals(literals)
-	return
+	Expr
 }
 
 type Symbol struct {
@@ -61,35 +56,61 @@ type Symbol struct {
 	Pattern string
 }
 
-type Expr struct {
-	Terms []*Term
-}
+type Expr []Term
 
-func (e *Expr) CollectLiterals(literals map[string]bool) {
-	for _, term := range e.Terms {
+func (e Expr) CollectLiterals(literals map[string]bool) {
+	for _, term := range e {
 		term.CollectLiterals(literals)
 	}
 	return
 }
 
-type Term struct {
-	Operator string
-	Term     *Term
-	Expr     *Expr
-	Field    string
-	Name     string
-	Literal  string
+type Term interface {
+	CollectLiterals(literals map[string]bool)
 }
 
-func (t *Term) CollectLiterals(literals map[string]bool) {
-	if t.Literal != "" {
-		literals[t.Literal] = true
-	}
-	if t.Expr != nil {
-		t.Expr.CollectLiterals(literals)
-	}
-	if t.Term != nil {
-		t.Term.CollectLiterals(literals)
-	}
+type RepeatZeroTerm struct {
+	Term
+}
+
+type RepeatOneTerm struct {
+	Term
+}
+
+type OptionalTerm struct {
+	Expr
+}
+
+type GroupTerm struct {
+	Expr
+}
+
+type noLiterals struct{}
+
+func (n noLiterals) CollectLiterals(literals map[string]bool) {
+	return
+}
+
+type RuleTerm struct {
+	Name string
+	noLiterals
+}
+
+type InlineRuleTerm struct {
+	Name string
+	noLiterals
+}
+
+type TagTerm struct {
+	Tag string
+	noLiterals
+}
+
+type LiteralTerm struct {
+	Literal string
+}
+
+func (l LiteralTerm) CollectLiterals(literals map[string]bool) {
+	literals[l.Literal] = true
 	return
 }

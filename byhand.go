@@ -1,319 +1,170 @@
 package gopp
 
+/*
+Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+
+
+Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+
+
+Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
+
+Expr => {field=Terms} <<Term>>+
+
+Term => {type=RepeatZeroTerm} {field=Term} <<Term>> '*'
+Term => {type=RepeatOneTerm} {field=Term} <<Term>> '+'
+Term => {type=OptionalTerm} '[' {field=Expr} <<Expr>> ']'
+Term => {type=GroupTerm} '(' {field=Expr} <<Expr>> ')'
+Term => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'
+Term => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'
+Term => {type=TagTerm} '{' {field=Tag} <identifier> '}'
+Term => {type=LiteralTerm} {field=Literal} <literal>
+
+identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
+
+literal = /'((?:[\\']|[^'])+?)'/
+
+regexp = /\/((?:\\/|[^\n])+?)\//
+*/
+
 var ByHandGrammar = Grammar{
-	Rules: []*Rule{
-		&Rule{ // Grammar => Rules=<<Rule>>+ Symbols=<<Symbol>>+
+	Rules: []Rule{
+		Rule{ // Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 			Name: "Grammar",
-			Expr: &Expr{ // Rules=<<Rule>>+ Symbols=<<Symbol>>+
-				Terms: []*Term{
-					&Term{ // Rules=<<Rule>>+
-						Operator: "=",
-						Field:    "Rules",
-						Term: &Term{ // <<Rule>>+
-							Operator: "+",
-							Term: &Term{ // <<Rule>>
-								Operator: "<<",
-								Name:     "Rule",
-							},
-						},
-					},
-					&Term{ // Symbols=<<Symbol>>+
-						Operator: "=",
-						Field:    "Symbols",
-						Term: &Term{ // <<Symbol>>+
-							Operator: "+",
-							Term: &Term{ // <<Symbol>>
-								Operator: "<<",
-								Name:     "Symbol",
-							},
-						},
-					},
+			Expr: Expr{ // {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+				TagTerm{Tag: "field=Rules"},
+				RepeatOneTerm{
+					RuleTerm{Name: "Rule"},
+				},
+				TagTerm{Tag: "field=Symbols"},
+				RepeatZeroTerm{
+					RuleTerm{Name: "Symbol"},
 				},
 			},
 		},
-		&Rule{ // Rule => Name=<identifier> '=>' Expr=<<Expr>> '\n'+
+		Rule{ // Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+
 			Name: "Rule",
-			Expr: &Expr{ // Name=<identifier> '=>' Expr=<<Expr>> '\n'+
-				Terms: []*Term{
-					&Term{ // Name=<identifier>
-						Operator: "=",
-						Field:    "Name",
-						Term: &Term{ // <identifier>
-							Operator: "<",
-							Name:     "identifier",
-						},
-					},
-					&Term{ // '=>'
-						Literal: "=>",
-					},
-					&Term{ // Expr=<<Expr>>
-						Operator: "=",
-						Field:    "Expr",
-						Term: &Term{ // <<Expr>>
-							Operator: "<<",
-							Name:     "Expr",
-						},
-					},
-					&Term{ // '\n'+
-						Operator: "+",
-						Term: &Term{ // '\n'
-							Literal: "\n",
-						},
-					},
+			Expr: Expr{
+				TagTerm{Tag: "field=Name"},
+				InlineRuleTerm{Name: "identifier"},
+				LiteralTerm{Literal: "=>"},
+				TagTerm{Tag: "field=Expr"},
+				RuleTerm{Name: "Expr"},
+				RepeatOneTerm{
+					LiteralTerm{Literal: "\n"},
 				},
 			},
 		},
-		&Rule{ // Symbol => Name=<identifier> '=' Pattern=<regexp> '\n'+
+		Rule{ // Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
 			Name: "Symbol",
-			Expr: &Expr{ // Name=<identifier> '=' Pattern=<regexp> '\n'+
-				Terms: []*Term{
-					&Term{ // Name=<identifier>
-						Operator: "=",
-						Field:    "Name",
-						Term: &Term{ // <identifier>
-							Operator: "<",
-							Name:     "identifier",
-						},
-					},
-					&Term{ // '='
-						Literal: "=",
-					},
-					&Term{ // Pattern=<regexp>
-						Operator: "=",
-						Field:    "Pattern",
-						Term: &Term{ // <regexp>
-							Operator: "<",
-							Name:     "regexp",
-						},
-					},
-					&Term{ // '\n'+
-						Operator: "+",
-						Term: &Term{ // '\n'
-							Literal: "\n",
-						},
-					},
+			Expr: Expr{
+				TagTerm{Tag: "field=Name"},
+				InlineRuleTerm{Name: "identifier"},
+				LiteralTerm{Literal: "="},
+				TagTerm{Tag: "field=Pattern"},
+				InlineRuleTerm{Name: "regexp"},
+				RepeatOneTerm{
+					LiteralTerm{Literal: "\n"},
 				},
 			},
 		},
-		&Rule{ // Expr => Terms=<<Term>>+
+		Rule{ // Expr => <<Term>>+
 			Name: "Expr",
-			Expr: &Expr{
-				Terms: []*Term{
-					&Term{ // Terms=<<Term>>+
-						Operator: "=",
-						Field:    "Terms",
-						Term: &Term{ // <<Term>>+
-							Operator: "+",
-							Term: &Term{ // <<Term>>
-								Operator: "<<",
-								Name:     "Term",
-							},
-						},
-					},
+			Expr: Expr{
+				TagTerm{Tag: "field=."},
+				RepeatOneTerm{
+					RuleTerm{Name: "Term"},
 				},
 			},
 		},
-		&Rule{ // Term => Term=<<Term>> Operator='*'
+		Rule{ // Term => {type=RepeatZeroTerm} {field=Term} <<Term>> '*'
 			Name: "Term",
-			Expr: &Expr{ // Term=<<Term>> Operator='*'
-				Terms: []*Term{
-					&Term{ // Term=<<Term>>
-						Operator: "=",
-						Field:    "Term",
-						Term: &Term{ // <<Term>>
-							Operator: "<<",
-							Name:     "Term",
-						},
-					},
-					&Term{ // Operator='*'
-						Operator: "=",
-						Field:    "Operator",
-						Term: &Term{ // '*'
-							Literal: "*",
-						},
-					},
-				},
+			Expr: Expr{
+				TagTerm{Tag: "type=RepeatZeroTerm"},
+				TagTerm{Tag: "field=Term"},
+				RuleTerm{Name: "Term"},
+				LiteralTerm{Literal: "*"},
 			},
 		},
-		&Rule{ // Term => Term=<<Term>> Operator='+'
+		Rule{ // Term => {type=RepeatOneTerm} {field=Term} <<Term>> '+'
 			Name: "Term",
-			Expr: &Expr{ // Term=<<Term>> Operator='+'
-				Terms: []*Term{
-					&Term{ // Term=<<Term>>
-						Operator: "=",
-						Field:    "Term",
-						Term: &Term{ // <<Term>>
-							Operator: "<<",
-							Name:     "Term",
-						},
-					},
-					&Term{ // Operator='+'
-						Operator: "=",
-						Field:    "Operator",
-						Term: &Term{ // '+'
-							Literal: "+",
-						},
-					},
-				},
+			Expr: Expr{
+				TagTerm{Tag: "type=RepeatOneTerm"},
+				TagTerm{Tag: "field=Term"},
+				RuleTerm{Name: "Term"},
+				LiteralTerm{Literal: "+"},
 			},
 		},
-		&Rule{ // Term => Operator='[' Expr=<<Expr>> ']'
+		Rule{ // Term => {type=OptionalTerm} '[' {field=Expr} <<Expr>> ']'
 			Name: "Term",
-			Expr: &Expr{ // Operator='[' Expr=<<Expr>> ']'
-				Terms: []*Term{
-					&Term{ // Operator='['
-						Operator: "=",
-						Field:    "Operator",
-						Term: &Term{ // '['
-							Literal: "[",
-						},
-					},
-					&Term{ // Expr=<<Expr>>
-						Operator: "=",
-						Field:    "Expr",
-						Term: &Term{ // <<Expr>>
-							Operator: "<<",
-							Name:     "Expr",
-						},
-					},
-					&Term{ // ']'
-						Literal: "]",
-					},
-				},
+			Expr: Expr{
+				TagTerm{Tag: "type=OptionalTerm"},
+				LiteralTerm{Literal: "["},
+				TagTerm{Tag: "field=Expr"},
+				RuleTerm{Name: "Expr"},
+				LiteralTerm{Literal: "]"},
 			},
 		},
-		&Rule{ // Term => Operator='(' Expr=<<Expr>> ')'
+		Rule{ // Term => {type=GroupTerm} '(' {field=Expr} <<Expr>> ')'
 			Name: "Term",
-			Expr: &Expr{ // Operator='(' Expr=<<Expr>> ')'
-				Terms: []*Term{
-					&Term{ // Operator='('
-						Operator: "=",
-						Field:    "Operator",
-						Term: &Term{ // '('
-							Literal: "(",
-						},
-					},
-					&Term{ // Expr=<<Expr>>
-						Operator: "=",
-						Field:    "Expr",
-						Term: &Term{ // <<Expr>>
-							Operator: "<<",
-							Name:     "Expr",
-						},
-					},
-					&Term{ // ')'
-						Literal: ")",
-					},
-				},
+			Expr: Expr{
+				TagTerm{Tag: "type=GroupTerm"},
+				LiteralTerm{Literal: "("},
+				TagTerm{Tag: "field=Expr"},
+				RuleTerm{Name: "Expr"},
+				LiteralTerm{Literal: ")"},
 			},
 		},
-		&Rule{ // Term => Operator='<<' Name=<identifier> '>>'
+		Rule{ // Term => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'
 			Name: "Term",
-			Expr: &Expr{ // Operator='<<' Name=<identifier> '>>'
-				Terms: []*Term{
-					&Term{ // Operator='<<'
-						Operator: "=",
-						Field:    "Operator",
-						Term: &Term{ // '<<'
-							Literal: "<<",
-						},
-					},
-					&Term{ // Name=<identifier>
-						Operator: "=",
-						Field:    "Name",
-						Term: &Term{ // <identifier>
-							Operator: "<",
-							Name:     "identifier",
-						},
-					},
-					&Term{ // '>>'
-						Literal: ">>",
-					},
-				},
+			Expr: Expr{
+				TagTerm{Tag: "type=RuleTerm"},
+				LiteralTerm{Literal: "<<"},
+				TagTerm{Tag: "field=Name"},
+				InlineRuleTerm{Name: "identifier"},
+				LiteralTerm{Literal: ">>"},
 			},
 		},
-		&Rule{ // Term => Operator='<' Name=<identifier> '>'
+		Rule{ // Term => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'
 			Name: "Term",
-			Expr: &Expr{ // Operator='<' Name=<identifier> '>'
-				Terms: []*Term{
-					&Term{ // Operator='<'
-						Operator: "=",
-						Field:    "Operator",
-						Term: &Term{ // '<'
-							Literal: "<",
-						},
-					},
-					&Term{ // Name=<identifier>
-						Operator: "=",
-						Field:    "Name",
-						Term: &Term{ // <identifier>
-							Operator: "<",
-							Name:     "identifier",
-						},
-					},
-					&Term{ // '>'
-						Literal: ">",
-					},
-				},
+			Expr: Expr{
+				TagTerm{Tag: "type=InlineRuleTerm"},
+				LiteralTerm{Literal: "<"},
+				TagTerm{Tag: "field=Name"},
+				InlineRuleTerm{Name: "identifier"},
+				LiteralTerm{Literal: ">"},
 			},
 		},
-		&Rule{ // Term => Field=<indentifier> Operator='=' Term=<<Term>>
+		Rule{ // Term => {type=TagTerm} {field=Tag} <tag>
 			Name: "Term",
-			Expr: &Expr{ // Field=<indentifier> Operator='=' Term=<<Term>>
-				Terms: []*Term{
-					&Term{ // Field=<indentifier>
-						Operator: "=",
-						Field:    "Field",
-						Term: &Term{ // <indentifier>
-							Operator: "<",
-							Name:     "identifier",
-						},
-					},
-					&Term{ // Operator='='
-						Operator: "=",
-						Field:    "Operator",
-						Term: &Term{ // '='
-							Literal: "=",
-						},
-					},
-					&Term{ // Term=<<Term>>
-						Operator: "=",
-						Field:    "Term",
-						Term: &Term{ // <<Term>>
-							Operator: "<<",
-							Name:     "Term",
-						},
-					},
-				},
+			Expr: Expr{
+				TagTerm{Tag: "type=TagTerm"},
+				TagTerm{Tag: "field=Tag"},
+				InlineRuleTerm{Name: "tag"},
 			},
 		},
-		&Rule{ // Term => Literal=<literal>
+		Rule{ // Term => {type=LiteralTerm} {field=Literal} <literal> 
 			Name: "Term",
-			Expr: &Expr{ // Literal=<literal>
-				Terms: []*Term{
-					&Term{ // Literal=<literal>
-						Operator: "=",
-						Field:    "Literal",
-						Term: &Term{ // <literal>
-							Operator: "<",
-							Name:     "literal",
-						},
-					},
-				},
+			Expr: Expr{
+				TagTerm{Tag: "type=LiteralTerm"},
+				TagTerm{Tag: "field=Literal"},
+				InlineRuleTerm{Name: "literal"},
 			},
 		},
 	},
-	Symbols: []*Symbol{
-		&Symbol{
-			Name:    "identifier",
+	Symbols: []Symbol{
+		Symbol{
+			Name: "identifier",
 			Pattern: `([a-zA-Z][a-zA-Z0-9_]*)`,
 		},
-		&Symbol{
-			Name:    "literal",
+		Symbol{
+			Name: "literal",
 			Pattern: `'((?:[\\']|[^'])+?)'`,
 		},
-		&Symbol{
-			Name:    "regexp",
+		Symbol{
+			Name: "tag",
+			Pattern: `\{((?:[\\']|[^'])+?)\}`,
+		},
+		Symbol{
+			Name: "regexp",
 			Pattern: `\/((?:\\/|[^\n])+?)\/`,
 		},
 	},
