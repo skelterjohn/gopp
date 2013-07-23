@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-const REGEXP_PREFIX = `^(?:\s)*`
+const REGEXP_PREFIX = `^(?: )*`
 
 type Grammar struct {
 	Rules   []Rule
@@ -19,7 +19,12 @@ func (g Grammar) CollectLiterals(literals map[string]bool) {
 	return
 }
 
-func (g Grammar) TokenREs() (res []*regexp.Regexp, err error) {
+type TypedRegexp struct {
+	Type string
+	*regexp.Regexp
+}
+
+func (g Grammar) TokenREs() (res []TypedRegexp, err error) {
 	// first get all the literals, and sort them longest first (so smaller ones don't eat larger ones).
 	literals := map[string]bool{}
 	g.CollectLiterals(literals)
@@ -33,7 +38,7 @@ func (g Grammar) TokenREs() (res []*regexp.Regexp, err error) {
 		if err != nil {
 			panic("regexp.QuoteMeta returned something that didn't compile")
 		}
-		res = append(res, re)
+		res = append(res, TypedRegexp{"RAW", re})
 	}
 	for _, symbol := range g.Symbols {
 		var re *regexp.Regexp
@@ -41,7 +46,7 @@ func (g Grammar) TokenREs() (res []*regexp.Regexp, err error) {
 		if err != nil {
 			return
 		}
-		res = append(res, re)
+		res = append(res, TypedRegexp{symbol.Name, re})
 	}
 	return
 }
@@ -67,6 +72,7 @@ func (e Expr) CollectLiterals(literals map[string]bool) {
 
 type Term interface {
 	CollectLiterals(literals map[string]bool)
+	Parse(g Grammar, tokens []string) (items []interface{}, remainingTokens []string, err error)
 }
 
 type RepeatZeroTerm struct {
@@ -97,8 +103,7 @@ type RuleTerm struct {
 }
 
 type InlineRuleTerm struct {
-	Name string
-	noLiterals
+	RuleTerm
 }
 
 type TagTerm struct {
@@ -113,4 +118,15 @@ type LiteralTerm struct {
 func (l LiteralTerm) CollectLiterals(literals map[string]bool) {
 	literals[l.Literal] = true
 	return
+}
+
+type AST []Node
+type Node interface{}
+type Tag string
+type Literal string
+type Identifier string
+type Regexp string
+type SymbolText struct {
+	Type string
+	Text string
 }

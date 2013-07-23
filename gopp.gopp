@@ -12,8 +12,8 @@ Term => {type=OptionalTerm} '[' {field=Expr} <<Expr>> ']'
 Term => {type=GroupTerm} '(' {field=Expr} <<Expr>> ')'
 Term => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'
 Term => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'
-Term => {type=TagTerm} '{' {field=Tag} <identifier> '}'
-Term => {type=LiteralTerm} {field=Literal} <literal>
+Term => {type=TagTerm} {field=.} <tag>
+Term => {type=LiteralTerm} {field=.} <literal>
 
 identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
 

@@ -44,7 +44,7 @@ var ByHandGrammar = Grammar{
 			Name: "Rule",
 			Expr: Expr{
 				TagTerm{Tag: "field=Name"},
-				InlineRuleTerm{Name: "identifier"},
+				InlineRuleTerm{RuleTerm{Name: "identifier"}},
 				LiteralTerm{Literal: "=>"},
 				TagTerm{Tag: "field=Expr"},
 				RuleTerm{Name: "Expr"},
@@ -57,10 +57,10 @@ var ByHandGrammar = Grammar{
 			Name: "Symbol",
 			Expr: Expr{
 				TagTerm{Tag: "field=Name"},
-				InlineRuleTerm{Name: "identifier"},
+				InlineRuleTerm{RuleTerm{Name: "identifier"}},
 				LiteralTerm{Literal: "="},
 				TagTerm{Tag: "field=Pattern"},
-				InlineRuleTerm{Name: "regexp"},
+				InlineRuleTerm{RuleTerm{Name: "regexp"}},
 				RepeatOneTerm{
 					LiteralTerm{Literal: "\n"},
 				},
@@ -119,7 +119,7 @@ var ByHandGrammar = Grammar{
 				TagTerm{Tag: "type=RuleTerm"},
 				LiteralTerm{Literal: "<<"},
 				TagTerm{Tag: "field=Name"},
-				InlineRuleTerm{Name: "identifier"},
+				InlineRuleTerm{RuleTerm{Name: "identifier"}},
 				LiteralTerm{Literal: ">>"},
 			},
 		},
@@ -129,7 +129,7 @@ var ByHandGrammar = Grammar{
 				TagTerm{Tag: "type=InlineRuleTerm"},
 				LiteralTerm{Literal: "<"},
 				TagTerm{Tag: "field=Name"},
-				InlineRuleTerm{Name: "identifier"},
+				InlineRuleTerm{RuleTerm{Name: "identifier"}},
 				LiteralTerm{Literal: ">"},
 			},
 		},
@@ -137,35 +137,260 @@ var ByHandGrammar = Grammar{
 			Name: "Term",
 			Expr: Expr{
 				TagTerm{Tag: "type=TagTerm"},
-				TagTerm{Tag: "field=Tag"},
-				InlineRuleTerm{Name: "tag"},
+				TagTerm{Tag: "field=."},
+				InlineRuleTerm{RuleTerm{Name: "tag"}},
 			},
 		},
-		Rule{ // Term => {type=LiteralTerm} {field=Literal} <literal> 
+		Rule{ // Term => {type=LiteralTerm} {field=Literal} <literal>
 			Name: "Term",
 			Expr: Expr{
 				TagTerm{Tag: "type=LiteralTerm"},
 				TagTerm{Tag: "field=Literal"},
-				InlineRuleTerm{Name: "literal"},
+				InlineRuleTerm{RuleTerm{Name: "literal"}},
 			},
 		},
 	},
 	Symbols: []Symbol{
 		Symbol{
-			Name: "identifier",
+			Name:    "identifier",
 			Pattern: `([a-zA-Z][a-zA-Z0-9_]*)`,
 		},
 		Symbol{
-			Name: "literal",
+			Name:    "literal",
 			Pattern: `'((?:[\\']|[^'])+?)'`,
 		},
 		Symbol{
-			Name: "tag",
+			Name:    "tag",
 			Pattern: `\{((?:[\\']|[^'])+?)\}`,
 		},
 		Symbol{
-			Name: "regexp",
+			Name:    "regexp",
 			Pattern: `\/((?:\\/|[^\n])+?)\/`,
 		},
 	},
 }
+
+func mki(text string) SymbolText {
+	return SymbolText{
+		Type: "identifier",
+		Text: text,
+	}
+}
+
+func mkr(text string) SymbolText {
+	return SymbolText{
+		Type: "regexp",
+		Text: text,
+	}
+}
+
+func mkt(text string) SymbolText {
+	return SymbolText{
+		Type: "tag",
+		Text: text,
+	}
+}
+
+func mkl(text string) SymbolText {
+	return SymbolText{
+		Type: "literal",
+		Text: text,
+	}
+}
+
+func mkGrammar(rules, symbols [][]Node) []Node {
+	return []Node{
+		mkt("field=Rules"),
+		mkRepeatOneTerm(rules),
+		mkt("field=Symbols"),
+		mkRepeatOneTerm(symbols),
+	}
+}
+
+func mkRule(name string, nodes ...Node) []Node {
+	return []Node{
+		Tag("field=Name"),
+		mki("name"),
+		Literal("=>"),
+		Tag("field=Expr"),
+		nodes,
+		[]Node{
+			Literal("\n"),
+		},
+	}
+	return nodes
+}
+
+func mkSymbol(name, pattern string) []Node {
+	return []Node{
+		mkt("field=Name"),
+		mki(name),
+		Literal("="),
+		mkt("field=Pattern"),
+		mkr(pattern),
+		[]Node{
+			Literal("\n"),
+		},
+	}
+}
+
+func mkExpr(nodes ...Node) []Node {
+	return []Node{
+		Tag("field=."),
+		nodes,
+	}
+}
+func mkRepeatZeroTerm(node Node) []Node {
+	return []Node{
+		Tag("type=RepeatZeroTerm"),
+		Tag("field=Term"),
+		node,
+		Literal("*"),
+	}
+}
+
+func mkRepeatOneTerm(node Node) []Node {
+	return []Node{
+		Tag("type=RepeatOneTerm"),
+		Tag("field=Term"),
+		node,
+		Literal("+"),
+	}
+}
+
+func mkOptionalTerm(node Node) []Node {
+	return []Node{
+		Tag("type=OptionalTerm"),
+		Literal("["),
+		Tag("field=Expr"),
+		node,
+		Literal("]"),
+	}
+}
+
+func mkRuleTerm(text string) []Node {
+	return []Node{
+		Tag("type=RuleTerm"),
+		Literal("<<"),
+		Tag("field=Name"),
+		mki(text),
+		Literal(">>"),
+	}
+}
+
+func mkInlineRuleTerm(text string) []Node {
+	return []Node{
+		Tag("type=InlineRuleTerm"),
+		Literal("<"),
+		Tag("field=Name"),
+		mki(text),
+		Literal(">"),
+	}
+}
+
+func mkTagTerm(text string) []Node {
+	return []Node{
+		Tag("type=TagTerm"),
+		Tag("field=."),
+		mkt(text),
+	}
+}
+
+func mkLiteralTerm(text string) []Node {
+	return []Node{
+		Tag("type=LiteralTerm"),
+		Tag("field=."),
+		mkt(text),
+	}
+}
+
+var ByHandGoppAST = mkGrammar(
+	[][]Node{
+		mkRule("Grammar",
+			mkTagTerm("field=Rules"),
+			mkRepeatOneTerm(
+				mkRuleTerm("Rule"),
+			),
+			mkTagTerm("field=Symbols"),
+			mkRepeatOneTerm(
+				mkRuleTerm("Symbol"),
+			),
+		),
+		mkRule("Rule",
+			mkTagTerm("field=Name"),
+			mkInlineRuleTerm("identifier"),
+			mkLiteralTerm("=>"),
+			mkTagTerm("field=Expr"),
+			mkRuleTerm("Expr"),
+			mkRepeatOneTerm(mkLiteralTerm("\n")),
+		),
+		mkRule("Symbol",
+			mkTagTerm("field=Name"),
+			mkInlineRuleTerm("identifier"),
+			mkLiteralTerm("="),
+			mkTagTerm("field=Pattern"),
+			mkInlineRuleTerm("regexp"),
+			mkRepeatOneTerm(mkLiteralTerm("\n")),
+		),
+		mkRule("Expr",
+			mkTagTerm("field=."),
+			mkRepeatOneTerm(mkRuleTerm("Term")),
+		),
+		mkRule("Term",
+			mkTagTerm("type=RepeatZeroTerm"),
+			mkTagTerm("field=Term"),
+			mkRuleTerm("Term"),
+			mkLiteralTerm("*"),
+		),
+		mkRule("Term",
+			mkTagTerm("type=RepeatOneTerm"),
+			mkTagTerm("field=Term"),
+			mkRuleTerm("Term"),
+			mkLiteralTerm("+"),
+		),
+		mkRule("Term",
+			mkTagTerm("type=OptionalTerm"),
+			mkLiteralTerm("["),
+			mkTagTerm("field=Expr"),
+			mkRuleTerm("Expr"),
+			mkLiteralTerm("]"),
+		),
+		mkRule("Term",
+			mkTagTerm("type=GroupTerm"),
+			mkLiteralTerm("("),
+			mkTagTerm("field=Expr"),
+			mkRuleTerm("Expr"),
+			mkLiteralTerm(")"),
+		),
+		mkRule("Term",
+			mkTagTerm("type=RuleTerm"),
+			mkLiteralTerm("<<"),
+			mkTagTerm("field=Name"),
+			mkInlineRuleTerm("identifier"),
+			mkLiteralTerm(">>"),
+		),
+		mkRule("Term",
+			mkTagTerm("type=InlineRuleTerm"),
+			mkLiteralTerm("<"),
+			mkTagTerm("field=Name"),
+			mkInlineRuleTerm("identifier"),
+			mkLiteralTerm(">"),
+		),
+		mkRule("Term",
+			mkTagTerm("type=TagTerm"),
+			mkTagTerm("field=."),
+			mkInlineRuleTerm("tag"),
+		),
+		mkRule("Term",
+			mkTagTerm("type=LiteralTerm"),
+			mkTagTerm("field=."),
+			mkInlineRuleTerm("literal"),
+		),
+	},
+	[][]Node{
+		mkSymbol("identifier", `([a-zA-Z][a-zA-Z0-9_]*)`),
+		mkSymbol("literal", `'((?:[\\']|[^'])+?)'`),
+		mkSymbol("tag", `\{((?:[\\']|[^'])+?)\}`),
+		mkSymbol("regexp", `\/((?:\\/|[^\n])+?)\/`),
+	},
+)

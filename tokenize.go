@@ -3,12 +3,22 @@ package gopp
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
-	"regexp"
 )
 
-func Tokenize(res []*regexp.Regexp, r io.Reader) (tokens <-chan string) {
-	ch := make(chan string)
+type Token struct {
+	Type string
+	Raw  string
+	Text string
+}
+
+func (t Token) String() string {
+	return fmt.Sprintf("(%s: %q)", t.Type, t.Text)
+}
+
+func Tokenize(res []TypedRegexp, r io.Reader) (tokens <-chan Token) {
+	ch := make(chan Token)
 	tokens = ch
 	go func() {
 		scanner := bufio.NewScanner(r)
@@ -22,6 +32,7 @@ func Tokenize(res []*regexp.Regexp, r io.Reader) (tokens <-chan string) {
 					// TODO: panic? error?
 					// add a chunk
 					buf.Write(scanner.Bytes())
+					buf.WriteString("\n")
 				} else {
 					eof = true
 				}
@@ -34,12 +45,15 @@ func Tokenize(res []*regexp.Regexp, r io.Reader) (tokens <-chan string) {
 					continue
 				}
 
-				token := matches[0]
+				token := Token{
+					Type: re.Type,
+					Raw:  string(matches[0]),
+				}
 				if len(matches) > 1 {
-					token = matches[1]
+					token.Text = string(matches[1])
 				}
 				buf.Read(matches[0])
-				ch <- string(token)
+				ch <- token
 				noMatch = false
 				break
 			}
