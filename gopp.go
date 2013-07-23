@@ -12,6 +12,28 @@ type Grammar struct {
 	Symbols []Symbol
 }
 
+func (g Grammar) Rule(name string) (r Rule, ok bool) {
+	for _, rule := range g.Rules {
+		if rule.Name == name {
+			r = rule
+			ok = true
+			return
+		}
+	}
+	return
+}
+
+func (g Grammar) Symbol(name string) (s Symbol, ok bool) {
+	for _, symb := range g.Symbols {
+		if symb.Name == name {
+			s = symb
+			ok = true
+			return
+		}
+	}
+	return
+}
+
 func (g Grammar) CollectLiterals(literals map[string]bool) {
 	for _, rule := range g.Rules {
 		rule.CollectLiterals(literals)
@@ -72,7 +94,7 @@ func (e Expr) CollectLiterals(literals map[string]bool) {
 
 type Term interface {
 	CollectLiterals(literals map[string]bool)
-	Parse(g Grammar, tokens []string) (items []interface{}, remainingTokens []string, err error)
+	Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error)
 }
 
 type RepeatZeroTerm struct {
@@ -103,7 +125,8 @@ type RuleTerm struct {
 }
 
 type InlineRuleTerm struct {
-	RuleTerm
+	Name string
+	noLiterals
 }
 
 type TagTerm struct {

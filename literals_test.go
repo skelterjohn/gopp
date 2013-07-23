@@ -71,7 +71,7 @@ func TestTokenREs(t *testing.T) {
 
 	counter := 0
 	r := strings.NewReader(goppgopp)
-	for token := range Tokenize(res, r) {
+	for _, token := range Tokenize(res, r) {
 		if token != goppTokens[counter] {
 			t.Errorf("Expected %v, got %v.", goppTokens[counter], token)
 		}
