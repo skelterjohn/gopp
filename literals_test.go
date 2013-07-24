@@ -37,6 +37,62 @@ func TestCollectLiterals(t *testing.T) {
 	}
 }
 
+var symbolTests = map[string][][]string{
+	"identifier": [][]string{
+		{"stuff", "stuff"},
+		{"xyz123", "xyz123"},
+		{"x_b", "x_b"},
+	},
+}
+var symbolFailTests = map[string][]string{
+	"identifier": []string{
+		"123",
+		".sdf-",
+		"!",
+	},
+}
+
+func TestSymbolTokenize(t *testing.T) {
+	for typ, examples := range symbolTests {
+		for _, example := range examples {
+			tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(example[0]))
+			if err != nil {
+				t.Error(err)
+				continue
+			}
+			if len(tokens) == 0 {
+				t.Error("No tokens for %q.", example[0])
+				continue
+			}
+			if typ != tokens[0].Type {
+				t.Errorf("Expected type %q, got %q.", typ, tokens[0].Type)
+				continue
+			}
+			if example[1] != tokens[0].Text {
+				t.Errorf("Expected %q, got %q.", example[1], tokens[0].Text)
+				continue
+			}
+		}
+	}
+}
+
+func TestSymbolFailTokenize(t *testing.T) {
+	for typ, examples := range symbolFailTests {
+		for _, example := range examples {
+			tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(example))
+			if err != nil {
+				continue
+			}
+			if len(tokens) == 0 {
+				continue
+			}
+			if typ == tokens[0].Type {
+				t.Errorf("Mistakenly parsed %q as %q.", example, typ)
+			}
+		}
+	}
+}
+
 var goppgopp = `Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+
 
 Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+
@@ -71,7 +127,11 @@ func TestTokenREs(t *testing.T) {
 
 	counter := 0
 	r := strings.NewReader(goppgopp)
-	for _, token := range Tokenize(res, r) {
+	tokens, err := Tokenize(res, r)
+	if err != nil {
+		t.Error(err)
+	}
+	for _, token := range tokens {
 		if token != goppTokens[counter] {
 			t.Errorf("Expected %v, got %v.", goppTokens[counter], token)
 		}

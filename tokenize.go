@@ -17,7 +17,7 @@ func (t Token) String() string {
 	return fmt.Sprintf("(%s: %q)", t.Type, t.Text)
 }
 
-func Tokenize(res []TypedRegexp, r io.Reader) (tokens []Token) {
+func Tokenize(res []TypedRegexp, r io.Reader) (tokens []Token, err error) {
 
 	scanner := bufio.NewScanner(r)
 	var buf bytes.Buffer
@@ -57,7 +57,9 @@ func Tokenize(res []TypedRegexp, r io.Reader) (tokens []Token) {
 		}
 
 		if noMatch && eof {
-			// TODO: panic?
+			if buf.Len() != 0 {
+				err = fmt.Errorf("Could not match %q.", buf.String())
+			}
 			break
 		}
 		if eof && buf.Len() == 0 {

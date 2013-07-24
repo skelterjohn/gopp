@@ -1,9 +1,8 @@
 package gopp
 
 import (
-	"fmt"
-	"regexp"
 	"errors"
+	"fmt"
 )
 
 func (r Rule) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
@@ -66,7 +65,7 @@ func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []interface{}, rem
 func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
 	r, ok := g.Rule(t.Name)
 	if !ok {
-		err  = fmt.Errorf("Unknown rule name: %q.", t.Name)
+		err = fmt.Errorf("Unknown rule name: %q.", t.Name)
 		return
 	}
 
@@ -85,27 +84,23 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []interface{}, r
 		return
 	}
 
-	if s, ok := g.Symbol(t.Name); ok {
-		re := regexp.MustCompile(s.Pattern)
-		matches := re.FindStringSubmatch(tokens[0].Text)
-		if len(matches) == 0 {
-			err = errors.New("Could not match symbol.")
+	if _, ok := g.Symbol(t.Name); ok {
+		if len(tokens) < 1 {
+			err = errors.New("Need at least one token to make a symbol.")
 			return
 		}
-		text := matches[0]
-		if len(matches) > 0 {
-			text = matches[1]
+		if t.Name == tokens[0].Type {
+			st := SymbolText{
+				Type: t.Name,
+				Text: tokens[0].Text,
+			}
+			items = []interface{}{st}
+			remainingTokens = tokens[1:]
+			return
 		}
-		st := SymbolText{
-			Type: t.Name,
-			Text: text,
-		}
-		items = []interface{}{st}
-		remainingTokens = tokens[1:]
-		return
 	}
-		
-	err  = fmt.Errorf("Unknown rule name: %q.", t.Name)
+
+	err = fmt.Errorf("Unknown rule name: %q.", t.Name)
 
 	return
 }
