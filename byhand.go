@@ -44,7 +44,7 @@ var ByHandGrammar = Grammar{
 			Name: "Rule",
 			Expr: Expr{
 				TagTerm{Tag: "field=Name"},
-				RuleTerm{Name: "identifier"},
+				InlineRuleTerm{Name: "identifier"},
 				LiteralTerm{Literal: "=>"},
 				TagTerm{Tag: "field=Expr"},
 				RuleTerm{Name: "Expr"},
@@ -57,7 +57,7 @@ var ByHandGrammar = Grammar{
 			Name: "Symbol",
 			Expr: Expr{
 				TagTerm{Tag: "field=Name"},
-				RuleTerm{Name: "identifier"},
+				InlineRuleTerm{Name: "identifier"},
 				LiteralTerm{Literal: "="},
 				TagTerm{Tag: "field=Pattern"},
 				RuleTerm{Name: "regexp"},
@@ -73,24 +73,6 @@ var ByHandGrammar = Grammar{
 				RepeatOneTerm{
 					RuleTerm{Name: "Term"},
 				},
-			},
-		},
-		Rule{ // Term => {type=RepeatZeroTerm} {field=Term} <<Term>> '*'
-			Name: "Term",
-			Expr: Expr{
-				TagTerm{Tag: "type=RepeatZeroTerm"},
-				TagTerm{Tag: "field=Term"},
-				RuleTerm{Name: "Term"},
-				LiteralTerm{Literal: "*"},
-			},
-		},
-		Rule{ // Term => {type=RepeatOneTerm} {field=Term} <<Term>> '+'
-			Name: "Term",
-			Expr: Expr{
-				TagTerm{Tag: "type=RepeatOneTerm"},
-				TagTerm{Tag: "field=Term"},
-				RuleTerm{Name: "Term"},
-				LiteralTerm{Literal: "+"},
 			},
 		},
 		Rule{ // Term => {type=OptionalTerm} '[' {field=Expr} <<Expr>> ']'
@@ -119,7 +101,7 @@ var ByHandGrammar = Grammar{
 				TagTerm{Tag: "type=RuleTerm"},
 				LiteralTerm{Literal: "<<"},
 				TagTerm{Tag: "field=Name"},
-				RuleTerm{Name: "identifier"},
+				InlineRuleTerm{Name: "identifier"},
 				LiteralTerm{Literal: ">>"},
 			},
 		},
@@ -129,7 +111,7 @@ var ByHandGrammar = Grammar{
 				TagTerm{Tag: "type=InlineRuleTerm"},
 				LiteralTerm{Literal: "<"},
 				TagTerm{Tag: "field=Name"},
-				RuleTerm{Name: "identifier"},
+				InlineRuleTerm{Name: "identifier"},
 				LiteralTerm{Literal: ">"},
 			},
 		},
@@ -138,7 +120,7 @@ var ByHandGrammar = Grammar{
 			Expr: Expr{
 				TagTerm{Tag: "type=TagTerm"},
 				TagTerm{Tag: "field=."},
-				RuleTerm{Name: "tag"},
+				InlineRuleTerm{Name: "tag"},
 			},
 		},
 		Rule{ // Term => {type=LiteralTerm} {field=Literal} <literal>
@@ -146,7 +128,25 @@ var ByHandGrammar = Grammar{
 			Expr: Expr{
 				TagTerm{Tag: "type=LiteralTerm"},
 				TagTerm{Tag: "field=Literal"},
-				RuleTerm{Name: "literal"},
+				InlineRuleTerm{Name: "literal"},
+			},
+		},
+		Rule{ // Term => {type=RepeatZeroTerm} {field=Term} <<Term>> '*'
+			Name: "Term",
+			Expr: Expr{
+				TagTerm{Tag: "type=RepeatZeroTerm"},
+				TagTerm{Tag: "field=Term"},
+				RuleTerm{Name: "Term"},
+				LiteralTerm{Literal: "*"},
+			},
+		},
+		Rule{ // Term => {type=RepeatOneTerm} {field=Term} <<Term>> '+'
+			Name: "Term",
+			Expr: Expr{
+				TagTerm{Tag: "type=RepeatOneTerm"},
+				TagTerm{Tag: "field=Term"},
+				RuleTerm{Name: "Term"},
+				LiteralTerm{Literal: "+"},
 			},
 		},
 	},

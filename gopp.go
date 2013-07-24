@@ -12,12 +12,10 @@ type Grammar struct {
 	Symbols []Symbol
 }
 
-func (g Grammar) Rule(name string) (r Rule, ok bool) {
+func (g Grammar) RulesForName(name string) (rs []Rule) {
 	for _, rule := range g.Rules {
 		if rule.Name == name {
-			r = rule
-			ok = true
-			return
+			rs = append(rs, rule)
 		}
 	}
 	return

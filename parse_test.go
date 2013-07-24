@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"fmt"
 )
 
 var ByHandGrammarREs []TypedRegexp
@@ -16,13 +17,67 @@ func init() {
 	}
 }
 
+func xTestParseFullGrammar(t *testing.T) {
+	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(goppgopp))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	start := ByHandGrammar.RulesForName("Grammar")[0]
+	items, remaining, err := start.Parse(ByHandGrammar, tokens)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(remaining) != 0 {
+		t.Error("Leftover tokens: %v.", remaining)
+	}
+	fmt.Println(items)
+}
+
+func TestParseEasyGrammar(t *testing.T) {
+	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("X => 'y'\nw = /z/\n"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	start := ByHandGrammar.RulesForName("Grammar")[0]
+	items, remaining, err := start.Parse(ByHandGrammar, tokens)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(remaining) != 0 {
+		t.Error("Leftover tokens: %v.", remaining)
+	}
+	fmt.Println(items)
+}
+
 func TestParseSymbol(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("'=>' stuff"))
+	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("'junkinthetrunk' stuff"))
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	term := InlineRuleTerm{Name:"literal"}
+	items, _, err := term.Parse(ByHandGrammar, tokens)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	st, ok := items[0].(SymbolText)
+	if !ok {
+		t.Errorf("Got a %T, expected a SymbolText.", items[0])
+		return
+	}
+	if st.Type != "literal" {
+		t.Errorf("Got a %q, expected a %q.", st.Type, "literal")
+		return
+	}
+	if st.Text != "junkinthetrunk" {
+		t.Errorf("Got %q, expected %q.", st.Text, "junkinthetrunk")
+		return
+	}
 }
 
 func TestParseTag(t *testing.T) {
