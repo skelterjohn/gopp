@@ -6,8 +6,8 @@ Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
 
 Expr => {field=.} <<Term>>+
 
-Term => Term1
-Term => Term2
+Term => <Term1>
+Term => <Term2>
 
 Term1 => {type=RepeatZeroTerm} {field=Term} <<Term2>> '*'
 Term1 => {type=RepeatOneTerm} {field=Term} <<Term2>> '+'

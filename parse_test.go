@@ -1,10 +1,10 @@
 package gopp
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
-	"fmt"
 )
 
 var ByHandGrammarREs []TypedRegexp
@@ -48,7 +48,7 @@ func TestParseEasyGrammar(t *testing.T) {
 		return
 	}
 	if len(remaining) != 0 {
-		t.Error("Leftover tokens: %v.", remaining)
+		t.Errorf("Leftover tokens: %v.", remaining)
 	}
 	fmt.Println(items)
 }
@@ -59,7 +59,7 @@ func TestParseSymbol(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	term := InlineRuleTerm{Name:"literal"}
+	term := InlineRuleTerm{Name: "literal"}
 	items, _, err := term.Parse(ByHandGrammar, tokens)
 	if err != nil {
 		t.Error(err)
