@@ -16,6 +16,15 @@ func init() {
 	}
 }
 
+func TestParseSymbol(t *testing.T) {
+	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("'=>' stuff"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	term := InlineRuleTerm{Name:"literal"}
+}
+
 func TestParseTag(t *testing.T) {
 	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("=> stuff"))
 	if err != nil {
