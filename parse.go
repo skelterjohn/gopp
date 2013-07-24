@@ -22,7 +22,7 @@ func indentOut() {
 	}
 }
 
-func (r Rule) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
+func (r Rule) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
 	if debug {
 		indentIn()
 		fmt.Printf("Rule(%q): %v\n", r.Name, tokens)
@@ -39,7 +39,7 @@ func (r Rule) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTo
 	return r.Expr.Parse(g, tokens)
 }
 
-func (e Expr) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
+func (e Expr) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
 	if debug {
 		indentIn()
 		fmt.Printf("Expr: %v\n", tokens)
@@ -54,18 +54,18 @@ func (e Expr) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTo
 		}()
 	}
 	for _, term := range e {
-		var newItem interface{}
-		newItem, tokens, err = term.Parse(g, tokens)
+		var newItems []Node
+		newItems, tokens, err = term.Parse(g, tokens)
 		if err != nil {
 			return
 		}
-		items = append(items, newItem)
+		items = append(items, newItems...)
 	}
 	remainingTokens = tokens
 	return
 }
 
-func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
+func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
 	if debug {
 		indentIn()
 		fmt.Printf("RepeatZeroTerm: %v\n", tokens)
@@ -91,7 +91,7 @@ func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token) (items []interface{}, r
 	return
 }
 
-func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
+func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
 	if debug {
 		indentIn()
 		fmt.Printf("RepeatOneTerm: %v\n", tokens)
@@ -120,7 +120,7 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []interface{}, re
 	return
 }
 
-func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
+func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
 	if debug {
 		indentIn()
 		fmt.Printf("OptionalTerm: %v\n", tokens)
@@ -144,7 +144,7 @@ func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []interface{}, rem
 	return
 }
 
-func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
+func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
 	if debug {
 		indentIn()
 		fmt.Printf("RuleTerm(%q): %v\n", t.Name, tokens)
@@ -164,16 +164,16 @@ func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remaini
 		return
 	}
 
-	var subitems []interface{}
-	fmt.Printf("%d rules for %q.\n", len(rules), t.Name)
+	var subitems []Node
+	//fmt.Printf("%d rules for %q.\n", len(rules), t.Name)
 	for _, rule := range rules {
-		if tt, ok := rule.Expr[0].(TagTerm); ok {
-			fmt.Printf("Trying %q.\n", tt.Tag)
-		}
+		// if tt, ok := rule.Expr[0].(TagTerm); ok {
+		// 	fmt.Printf("Trying %q.\n", tt.Tag)
+		// }
 		subitems, remainingTokens, err = rule.Parse(g, tokens)
 
 		if err == nil {
-			items = []interface{}{subitems}
+			items = []Node{subitems}
 			return
 		}
 	}
@@ -181,7 +181,7 @@ func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remaini
 	return
 }
 
-func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
+func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
 	if debug {
 		indentIn()
 		fmt.Printf("InlineRuleTerm(%q): %v\n", t.Name, tokens)
@@ -214,7 +214,7 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []interface{}, r
 				Type: t.Name,
 				Text: tokens[0].Text,
 			}
-			items = []interface{}{st}
+			items = []Node{st}
 			remainingTokens = tokens[1:]
 			return
 		}
@@ -225,13 +225,13 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []interface{}, r
 	return
 }
 
-func (t TagTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
-	items = []interface{}{Tag(t.Tag)}
+func (t TagTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+	items = []Node{Tag(t.Tag)}
 	remainingTokens = tokens
 	return
 }
 
-func (t LiteralTerm) Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error) {
+func (t LiteralTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
 	if debug {
 		indentIn()
 		fmt.Printf("LiteralTerm(%q): %v\n", t.Literal, tokens)
@@ -257,7 +257,7 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token) (items []interface{}, rema
 		err = errors.New("Incorrect literal.")
 		return
 	}
-	items = []interface{}{Literal(tokens[0].Text)}
+	items = []Node{Literal(tokens[0].Text)}
 	remainingTokens = tokens[1:]
 	return
 }

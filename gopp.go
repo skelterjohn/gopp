@@ -1,6 +1,7 @@
 package gopp
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 )
@@ -92,7 +93,7 @@ func (e Expr) CollectLiterals(literals map[string]bool) {
 
 type Term interface {
 	CollectLiterals(literals map[string]bool)
-	Parse(g Grammar, tokens []Token) (items []interface{}, remainingTokens []Token, err error)
+	Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error)
 }
 
 type RepeatZeroTerm struct {
@@ -144,10 +145,34 @@ func (l LiteralTerm) CollectLiterals(literals map[string]bool) {
 type AST []Node
 type Node interface{}
 type Tag string
+
+func (t Tag) String() string {
+	return fmt.Sprintf("Tag(%s)", string(t))
+}
+
 type Literal string
+
+func (l Literal) String() string {
+	return fmt.Sprintf("Literal(%s)", string(l))
+}
+
 type Identifier string
+
+func (i Identifier) String() string {
+	return fmt.Sprintf("Identifier(%s)", string(i))
+}
+
 type Regexp string
+
+func (r Regexp) String() string {
+	return fmt.Sprintf("Regexp(%s)", string(r))
+}
+
 type SymbolText struct {
 	Type string
 	Text string
+}
+
+func (s SymbolText) String() string {
+	return fmt.Sprintf("<%s:%q>", s.Type, s.Text)
 }

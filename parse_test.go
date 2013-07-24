@@ -36,6 +36,17 @@ func xTestParseFullGrammar(t *testing.T) {
 }
 
 func TestParseEasyGrammar(t *testing.T) {
+	byHandAST := mkGrammar(
+		[][]Node{
+			mkRule("X",
+				mkLiteralTerm("y"),
+			),
+		},
+		[][]Node{
+			mkSymbol("w", "z"),
+		},
+	)
+
 	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("X => 'y'\nw = /z/\n"))
 	if err != nil {
 		t.Error(err)
@@ -50,6 +61,14 @@ func TestParseEasyGrammar(t *testing.T) {
 	if len(remaining) != 0 {
 		t.Errorf("Leftover tokens: %v.", remaining)
 	}
+
+	if !reflect.DeepEqual(byHandAST, AST(items)) {
+		t.Error("Generated AST doesn't match by-hand AST.")
+	}
+
+	fmt.Println("by hand")
+	fmt.Println(byHandAST)
+	fmt.Println("generated")
 	fmt.Println(items)
 }
 

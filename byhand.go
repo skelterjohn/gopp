@@ -131,7 +131,7 @@ var ByHandGrammar = Grammar{
 			Name: "Term2",
 			Expr: Expr{
 				TagTerm{Tag: "type=TagTerm"},
-				TagTerm{Tag: "field=."},
+				TagTerm{Tag: "field=Tag"},
 				InlineRuleTerm{Name: "tag"},
 			},
 		},
@@ -212,20 +212,20 @@ func mkl(text string) SymbolText {
 
 func mkGrammar(rules, symbols [][]Node) []Node {
 	return []Node{
-		mkt("field=Rules"),
-		mkRepeatOneTerm(rules),
-		mkt("field=Symbols"),
-		mkRepeatOneTerm(symbols),
+		Tag("field=Rules"),
+		rules,
+		Tag("field=Symbols"),
+		symbols,
 	}
 }
 
 func mkRule(name string, nodes ...Node) []Node {
 	return []Node{
 		Tag("field=Name"),
-		mki("name"),
+		mki(name),
 		Literal("=>"),
 		Tag("field=Expr"),
-		nodes,
+		mkExpr(nodes),
 		[]Node{
 			Literal("\n"),
 		},
@@ -235,10 +235,10 @@ func mkRule(name string, nodes ...Node) []Node {
 
 func mkSymbol(name, pattern string) []Node {
 	return []Node{
-		mkt("field=Name"),
+		Tag("field=Name"),
 		mki(name),
 		Literal("="),
-		mkt("field=Pattern"),
+		Tag("field=Pattern"),
 		mkr(pattern),
 		[]Node{
 			Literal("\n"),
@@ -247,10 +247,7 @@ func mkSymbol(name, pattern string) []Node {
 }
 
 func mkExpr(nodes ...Node) []Node {
-	return []Node{
-		Tag("field=."),
-		nodes,
-	}
+	return append([]Node{Tag("field=.")}, nodes...)
 }
 func mkRepeatZeroTerm(node Node) []Node {
 	return []Node{
@@ -311,19 +308,19 @@ func mkTagTerm(text string) []Node {
 func mkLiteralTerm(text string) []Node {
 	return []Node{
 		Tag("type=LiteralTerm"),
-		Tag("field=."),
-		mkt(text),
+		Tag("field=Literal"),
+		mkl(text),
 	}
 }
 
 var ByHandGoppAST = mkGrammar(
 	[][]Node{
 		mkRule("Grammar",
-			mkTagTerm("field=Rules"),
+			Tag("field=Rules"),
 			mkRepeatOneTerm(
 				mkRuleTerm("Rule"),
 			),
-			mkTagTerm("field=Symbols"),
+			Tag("field=Symbols"),
 			mkRepeatOneTerm(
 				mkRuleTerm("Symbol"),
 			),
