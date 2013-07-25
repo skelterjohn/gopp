@@ -143,6 +143,7 @@ func (l LiteralTerm) CollectLiterals(literals map[string]bool) {
 }
 
 type AST []Node
+
 type Node interface{}
 type Tag string
 

@@ -69,9 +69,8 @@ var ByHandGrammar = Grammar{
 		Rule{ // Expr => <<Term>>+
 			Name: "Expr",
 			Expr: Expr{
-				TagTerm{Tag: "field=."},
 				RepeatOneTerm{
-					RuleTerm{Name: "Term"},
+					InlineRuleTerm{Name: "Term"},
 				},
 			},
 		},
@@ -210,7 +209,7 @@ func mkl(text string) SymbolText {
 	}
 }
 
-func mkGrammar(rules, symbols [][]Node) []Node {
+func mkGrammar(rules, symbols []Node) []Node {
 	return []Node{
 		Tag("field=Rules"),
 		rules,
@@ -225,7 +224,7 @@ func mkRule(name string, nodes ...Node) []Node {
 		mki(name),
 		Literal("=>"),
 		Tag("field=Expr"),
-		mkExpr(nodes),
+		mkExpr(nodes...),
 		[]Node{
 			Literal("\n"),
 		},
@@ -247,7 +246,7 @@ func mkSymbol(name, pattern string) []Node {
 }
 
 func mkExpr(nodes ...Node) []Node {
-	return append([]Node{Tag("field=.")}, nodes...)
+	return nodes
 }
 func mkRepeatZeroTerm(node Node) []Node {
 	return []Node{
@@ -314,7 +313,7 @@ func mkLiteralTerm(text string) []Node {
 }
 
 var ByHandGoppAST = mkGrammar(
-	[][]Node{
+	[]Node{
 		mkRule("Grammar",
 			Tag("field=Rules"),
 			mkRepeatOneTerm(
@@ -402,7 +401,7 @@ var ByHandGoppAST = mkGrammar(
 			mkInlineRuleTerm("literal"),
 		),
 	},
-	[][]Node{
+	[]Node{
 		mkSymbol("identifier", `([a-zA-Z][a-zA-Z0-9_]*)`),
 		mkSymbol("literal", `'((?:[\\']|[^'])+?)'`),
 		mkSymbol("tag", `\{((?:[\\']|[^'])+?)\}`),
