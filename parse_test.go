@@ -63,7 +63,7 @@ func TestParseEasyGrammar(t *testing.T) {
 	}
 
 	dig := func(ast AST) Node {
-		return ast[1].([]Node)[0]
+		return ast
 	}
 
 	if !reflect.DeepEqual(dig(byHandAST), dig(AST(items))) {
