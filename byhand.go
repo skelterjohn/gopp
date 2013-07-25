@@ -29,7 +29,10 @@ var ByHandGrammar = Grammar{
 	Rules: []Rule{
 		Rule{ // Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 			Name: "Grammar",
-			Expr: Expr{ // {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+			Expr: Expr{ // '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+				RepeatZeroTerm{
+					LiteralTerm{Literal: "\n"},
+				},
 				TagTerm{Tag: "field=Rules"},
 				RepeatOneTerm{
 					RuleTerm{Name: "Rule"},
@@ -271,7 +274,7 @@ func mkOptionalTerm(node Node) []Node {
 		Tag("type=OptionalTerm"),
 		Literal("["),
 		Tag("field=Expr"),
-		node,
+		[]Node{node},
 		Literal("]"),
 	}
 }
@@ -315,6 +318,7 @@ func mkLiteralTerm(text string) []Node {
 var ByHandGoppAST = mkGrammar(
 	[]Node{
 		mkRule("Grammar",
+			mkRepeatZeroTerm(mkLiteralTerm("\n")),
 			Tag("field=Rules"),
 			mkRepeatOneTerm(
 				mkRuleTerm("Rule"),

@@ -17,6 +17,31 @@ func init() {
 	}
 }
 
+func printNode(node Node, indentCount int) {
+	indent := func(tag string) {
+		for i := 0; i < indentCount; i++ {
+			fmt.Print(" ")
+		}
+		fmt.Println(tag)
+	}
+	switch node := node.(type) {
+	case []Node:
+		indent("[")
+		for _, n := range node {
+			printNode(n, indentCount+1)
+		}
+		indent("]")
+	case AST:
+		indent("[")
+		for _, n := range node {
+			printNode(n, indentCount+1)
+		}
+		indent("]")
+	default:
+		indent(fmt.Sprint(node))
+	}
+}
+
 func xTestParseFullGrammar(t *testing.T) {
 	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(goppgopp))
 	if err != nil {
@@ -35,7 +60,7 @@ func xTestParseFullGrammar(t *testing.T) {
 	fmt.Println(items)
 }
 
-func TestParseEasyGrammar(t *testing.T) {
+func xTestParseEasyGrammar(t *testing.T) {
 	byHandAST := mkGrammar(
 		[]Node{
 			mkRule("X",
@@ -64,6 +89,58 @@ func TestParseEasyGrammar(t *testing.T) {
 
 	if !reflect.DeepEqual(byHandAST, AST(items)) {
 		t.Error("Generated AST doesn't match by-hand AST.")
+	}
+}
+
+func TestParseMultiRule(t *testing.T) {
+	byHandAST := mkGrammar(
+		[]Node{
+			mkRule("X",
+				mkOptionalTerm(
+					mkLiteralTerm("y"),
+				),
+			),
+			mkRule("Z",
+				mkRepeatOneTerm(
+					mkRuleTerm("X"),
+				),
+			),
+		},
+		[]Node{
+			mkSymbol("w", "z"),
+		},
+	)
+
+	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`X => ['y']
+Z => <<X>>+
+w = /z/
+`))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	start := ByHandGrammar.RulesForName("Grammar")[0]
+	items, remaining, err := start.Parse(ByHandGrammar, tokens)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(remaining) != 0 {
+		t.Errorf("Leftover tokens: %v.", remaining)
+	}
+
+	if !reflect.DeepEqual(byHandAST, AST(items)) {
+		t.Error("Generated AST doesn't match by-hand AST.")
+	}
+
+	if true {
+		dig := func(top AST) interface{} {
+			return top
+		}
+		fmt.Println("byhand")
+		printNode(dig(byHandAST), 0)
+		fmt.Println("generated")
+		printNode(dig(AST(items)), 0)
 	}
 }
 

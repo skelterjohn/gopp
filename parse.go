@@ -3,34 +3,56 @@ package gopp
 import (
 	"errors"
 	"fmt"
-	"github.com/skelterjohn/debugtags"
 )
 
-var tr = debugtags.Tracer{Enabled: false}
+const debug = false
+
+var indentCount int = 0
+
+func indentIn() {
+	for i := 0; i < indentCount; i++ {
+		fmt.Print(" ")
+	}
+	indentCount++
+}
+func indentOut() {
+	indentCount--
+	for i := 0; i < indentCount; i++ {
+		fmt.Print(" ")
+	}
+}
 
 func (r Rule) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
-	const trName = "Rule"
-	tr.In(trName, r.Name, tokens)
-	defer func() {
-		if err == nil {
-			tr.Out(trName, items)
-		} else {
-			tr.Out(trName, err)
-		}
-	}()
+	if debug {
+		indentIn()
+		fmt.Printf("Rule(%q): %v\n", r.Name, tokens)
+		defer func() {
+			indentOut()
+			fmt.Printf("-Rule(%q): ", r.Name)
+			if err == nil {
+				fmt.Println(items)
+			} else {
+				fmt.Println(err)
+			}
+		}()
+	}
 	return r.Expr.Parse(g, tokens)
 }
 
 func (e Expr) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
-	const trName = "Expr"
-	tr.In(trName, tokens)
-	defer func() {
-		if err == nil {
-			tr.Out(trName, items)
-		} else {
-			tr.Out(trName, err)
-		}
-	}()
+	if debug {
+		indentIn()
+		fmt.Printf("Expr: %v\n", tokens)
+		defer func() {
+			indentOut()
+			fmt.Printf("-Expr: ")
+			if err == nil {
+				fmt.Println(items)
+			} else {
+				fmt.Println(err)
+			}
+		}()
+	}
 	for _, term := range e {
 		var newItems []Node
 		newItems, tokens, err = term.Parse(g, tokens)
@@ -44,44 +66,52 @@ func (e Expr) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []
 }
 
 func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
-	const trName = "RepeatZeroTerm"
-	tr.In(trName, tokens)
-	defer func() {
-		if err == nil {
-			tr.Out(trName, items)
-		} else {
-			tr.Out(trName, err)
-		}
-	}()
+	if debug {
+		indentIn()
+		fmt.Printf("RepeatZeroTerm: %v\n", tokens)
+		defer func() {
+			indentOut()
+			fmt.Printf("-RepeatZeroTerm: ")
+			if err == nil {
+				fmt.Println(items)
+			} else {
+				fmt.Println(err)
+			}
+		}()
+	}
 	remainingTokens = tokens
 	for {
-		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens)
+		subitem, subtokens, suberr := t.Term.Parse(g, remainingTokens)
 		if suberr != nil {
 			break
 		}
-		items = append(items, subitems)
+		items = append(items, subitem)
 		remainingTokens = subtokens
 	}
 	return
 }
 
 func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
-	const trName = "RepeatOneTerm"
-	tr.In(trName, tokens)
-	defer func() {
-		if err == nil {
-			tr.Out(trName, items)
-		} else {
-			tr.Out(trName, err)
-		}
-	}()
+	if debug {
+		indentIn()
+		fmt.Printf("RepeatOneTerm: %v\n", tokens)
+		defer func() {
+			indentOut()
+			fmt.Printf("-RepeatOneTerm: ")
+			if err == nil {
+				fmt.Println(items)
+			} else {
+				fmt.Println(err)
+			}
+		}()
+	}
 	remainingTokens = tokens
 	for {
-		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens)
+		subitem, subtokens, suberr := t.Term.Parse(g, remainingTokens)
 		if suberr != nil {
 			break
 		}
-		items = append(items, subitems)
+		items = append(items, subitem)
 		remainingTokens = subtokens
 	}
 	if len(items) == 0 {
@@ -91,15 +121,19 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []Node, remaining
 }
 
 func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
-	const trName = "OptionalTerm"
-	tr.In(trName, tokens)
-	defer func() {
-		if err == nil {
-			tr.Out(trName, items)
-		} else {
-			tr.Out(trName, err)
-		}
-	}()
+	if debug {
+		indentIn()
+		fmt.Printf("OptionalTerm: %v\n", tokens)
+		defer func() {
+			indentOut()
+			fmt.Printf("-OptionalTerm: ")
+			if err == nil {
+				fmt.Println(items)
+			} else {
+				fmt.Println(err)
+			}
+		}()
+	}
 	subitem, subtokens, suberr := t.Expr.Parse(g, remainingTokens)
 	if suberr != nil {
 		remainingTokens = tokens
@@ -111,15 +145,19 @@ func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingT
 }
 
 func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
-	const trName = "RuleTerm"
-	tr.In(trName, t.Name, tokens)
-	defer func() {
-		if err == nil {
-			tr.Out(trName, items)
-		} else {
-			tr.Out(trName, err)
-		}
-	}()
+	if debug {
+		indentIn()
+		fmt.Printf("RuleTerm(%q): %v\n", t.Name, tokens)
+		defer func() {
+			indentOut()
+			fmt.Printf("-RuleTerm(%q): ", t.Name)
+			if err == nil {
+				fmt.Println(items)
+			} else {
+				fmt.Println(err)
+			}
+		}()
+	}
 	rules := g.RulesForName(t.Name)
 	if len(rules) == 0 {
 		err = fmt.Errorf("Unknown rule name: %q.", t.Name)
@@ -144,16 +182,19 @@ func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingToken
 }
 
 func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
-	const trName = "InlineRuleTerm"
-	tr.In(trName, tokens)
-	defer func() {
-		if err == nil {
-			tr.Out(trName, items)
-		} else {
-			tr.Out(trName, err)
-		}
-	}()
-
+	if debug {
+		indentIn()
+		fmt.Printf("InlineRuleTerm(%q): %v\n", t.Name, tokens)
+		defer func() {
+			indentOut()
+			fmt.Printf("-InlineRuleTerm(%q): ", t.Name)
+			if err == nil {
+				fmt.Println(items)
+			} else {
+				fmt.Println(err)
+			}
+		}()
+	}
 	rules := g.RulesForName(t.Name)
 	for _, rule := range rules {
 		items, remainingTokens, err = rule.Parse(g, tokens)
@@ -191,15 +232,19 @@ func (t TagTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens
 }
 
 func (t LiteralTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
-	const trName = "Literal"
-	tr.In(trName, tokens)
-	defer func() {
-		if err == nil {
-			tr.Out(trName, items)
-		} else {
-			tr.Out(trName, err)
-		}
-	}()
+	if debug {
+		indentIn()
+		fmt.Printf("LiteralTerm(%q): %v\n", t.Literal, tokens)
+		defer func() {
+			indentOut()
+			fmt.Printf("-LiteralTerm(%q): ", t.Literal)
+			if err == nil {
+				fmt.Println(items)
+			} else {
+				fmt.Println(err)
+			}
+		}()
+	}
 	if len(tokens) == 0 {
 		err = errors.New("Not enough tokens.")
 		return
