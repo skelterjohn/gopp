@@ -62,18 +62,9 @@ func TestParseEasyGrammar(t *testing.T) {
 		t.Errorf("Leftover tokens: %v.", remaining)
 	}
 
-	dig := func(ast AST) Node {
-		return ast
-	}
-
-	if !reflect.DeepEqual(dig(byHandAST), dig(AST(items))) {
+	if !reflect.DeepEqual(byHandAST, AST(items)) {
 		t.Error("Generated AST doesn't match by-hand AST.")
 	}
-
-	fmt.Println("by hand")
-	fmt.Println(dig(byHandAST))
-	fmt.Println("generated")
-	fmt.Println(dig(items))
 }
 
 func TestParseSymbol(t *testing.T) {

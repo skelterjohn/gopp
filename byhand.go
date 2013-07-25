@@ -209,7 +209,7 @@ func mkl(text string) SymbolText {
 	}
 }
 
-func mkGrammar(rules, symbols []Node) []Node {
+func mkGrammar(rules, symbols []Node) AST {
 	return []Node{
 		Tag("field=Rules"),
 		rules,
