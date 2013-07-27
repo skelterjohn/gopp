@@ -214,6 +214,9 @@ func mkl(text string) SymbolText {
 
 func mkGrammar(rules, symbols []Node) AST {
 	return []Node{
+		[]Node{
+			Literal("\n"),
+		},
 		Tag("field=Rules"),
 		rules,
 		Tag("field=Symbols"),

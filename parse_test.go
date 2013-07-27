@@ -111,7 +111,8 @@ func TestParseMultiRule(t *testing.T) {
 		},
 	)
 
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`X => ['y']
+	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`
+X => ['y']
 Z => <<X>>+
 w = /z/
 `))
@@ -133,7 +134,7 @@ w = /z/
 		t.Error("Generated AST doesn't match by-hand AST.")
 	}
 
-	if true {
+	if false {
 		dig := func(top AST) interface{} {
 			return top
 		}

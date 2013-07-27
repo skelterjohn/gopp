@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 const REGEXP_PREFIX = `^(?: )*`
@@ -154,7 +155,7 @@ func (t Tag) String() string {
 type Literal string
 
 func (l Literal) String() string {
-	return fmt.Sprintf("Literal(%s)", string(l))
+	return fmt.Sprintf("Literal(%s)", string(strings.Replace(string(l), "\n", `\n`, -1)))
 }
 
 type Identifier string

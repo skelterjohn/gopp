@@ -80,14 +80,16 @@ func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token) (items []Node, remainin
 		}()
 	}
 	remainingTokens = tokens
+	var myitems []Node
 	for {
-		subitem, subtokens, suberr := t.Term.Parse(g, remainingTokens)
+		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens)
 		if suberr != nil {
 			break
 		}
-		items = append(items, subitem)
+		myitems = append(myitems, subitems...)
 		remainingTokens = subtokens
 	}
+	items = []Node{myitems}
 	return
 }
 
@@ -106,14 +108,16 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []Node, remaining
 		}()
 	}
 	remainingTokens = tokens
+	var myitems []Node
 	for {
-		subitem, subtokens, suberr := t.Term.Parse(g, remainingTokens)
+		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens)
 		if suberr != nil {
 			break
 		}
-		items = append(items, subitem)
+		myitems = append(myitems, subitems...)
 		remainingTokens = subtokens
 	}
+	items = []Node{myitems}
 	if len(items) == 0 {
 		err = errors.New("RepeatOneTerm found zero.")
 	}
