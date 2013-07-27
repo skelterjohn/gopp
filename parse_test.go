@@ -60,7 +60,7 @@ func xTestParseFullGrammar(t *testing.T) {
 	fmt.Println(items)
 }
 
-func xTestParseEasyGrammar(t *testing.T) {
+func TestParseEasyGrammar(t *testing.T) {
 	byHandAST := mkGrammar(
 		[]Node{
 			mkRule("X",
@@ -72,7 +72,10 @@ func xTestParseEasyGrammar(t *testing.T) {
 		},
 	)
 
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("X => 'y'\nw = /z/\n"))
+	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`
+X => 'y'
+w = /z/
+`))
 	if err != nil {
 		t.Error(err)
 		return
@@ -89,6 +92,16 @@ func xTestParseEasyGrammar(t *testing.T) {
 
 	if !reflect.DeepEqual(byHandAST, AST(items)) {
 		t.Error("Generated AST doesn't match by-hand AST.")
+	}
+
+	if false {
+		dig := func(top AST) interface{} {
+			return top
+		}
+		fmt.Println("byhand")
+		printNode(dig(byHandAST), 0)
+		fmt.Println("generated")
+		printNode(dig(AST(items)), 0)
 	}
 }
 
