@@ -227,7 +227,7 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTo
 	quoted := fmt.Sprintf("\"%s\"", t.Literal)
 	_ = quoted
 	unquoted, qerr := strconv.Unquote(quoted)
-	if qerr == nil {
+	if qerr == nil && false {
 		literalText = unquoted
 	}
 
