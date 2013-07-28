@@ -11,7 +11,16 @@ const debug = false
 
 var tr = debugtags.Tracer{Enabled: false}
 
-func (r Rule) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+type ParseData struct {
+    LastUnacceptedTokens []Token   
+}
+func (pd *ParseData) AcceptUpTo(tokens []Token) {
+    if len(tokens) < len(pd.LastUnacceptedTokens) {
+        pd.LastUnacceptedTokens = tokens
+    }
+)
+
+func (r Rule) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("Rule(%q)", r.Name)
 	tr.In(rName, tokens)
 	defer func() {
@@ -22,10 +31,10 @@ func (r Rule) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []
 		}
 	}()
 
-	return r.Expr.Parse(g, tokens)
+	return r.Expr.Parse(g, tokens, pd)
 }
 
-func (e Expr) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+func (e Expr) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("Expr")
 	tr.In(rName, tokens)
 	defer func() {
@@ -38,7 +47,7 @@ func (e Expr) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []
 
 	for _, term := range e {
 		var newItems []Node
-		newItems, tokens, err = term.Parse(g, tokens)
+		newItems, tokens, err = term.Parse(g, tokens, pd)
 		if err != nil {
 			return
 		}
@@ -48,7 +57,7 @@ func (e Expr) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []
 	return
 }
 
-func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("RepeatZeroTerm")
 	tr.In(rName, tokens)
 	defer func() {
@@ -62,7 +71,7 @@ func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token) (items []Node, remainin
 	remainingTokens = tokens
 	var myitems []Node
 	for {
-		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens)
+		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens, pd)
 		if suberr != nil {
 			break
 		}
@@ -73,7 +82,7 @@ func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token) (items []Node, remainin
 	return
 }
 
-func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+func (t RepeatOneTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("RepeatOneTerm")
 	tr.In(rName, tokens)
 	defer func() {
@@ -87,7 +96,7 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []Node, remaining
 	remainingTokens = tokens
 	var myitems []Node
 	for {
-		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens)
+		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens, pd)
 		if suberr != nil {
 			break
 		}
@@ -101,7 +110,7 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token) (items []Node, remaining
 	return
 }
 
-func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+func (t OptionalTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("OptionalTerm")
 	tr.In(rName, tokens)
 	defer func() {
@@ -112,7 +121,7 @@ func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingT
 		}
 	}()
 
-	subitem, subtokens, suberr := t.Expr.Parse(g, remainingTokens)
+	subitem, subtokens, suberr := t.Expr.Parse(g, remainingTokens, pd)
 	if suberr != nil {
 		remainingTokens = tokens
 		return
@@ -122,7 +131,7 @@ func (t OptionalTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingT
 	return
 }
 
-func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+func (t RuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("RuleTerm(%q)", t.Name)
 	tr.In(rName, tokens)
 	defer func() {
@@ -145,7 +154,7 @@ func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingToken
 		// if tt, ok := rule.Expr[0].(TagTerm); ok {
 		// 	fmt.Printf("Trying %q.\n", tt.Tag)
 		// }
-		subitems, remainingTokens, err = rule.Parse(g, tokens)
+		subitems, remainingTokens, err = rule.Parse(g, tokens, pd)
 
 		if err == nil {
 			items = []Node{subitems}
@@ -156,7 +165,7 @@ func (t RuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingToken
 	return
 }
 
-func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+func (t InlineRuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("InlineRuleTerm(%q)", t.Name)
 	tr.In(rName, tokens)
 	defer func() {
@@ -169,7 +178,7 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainin
 
 	rules := g.RulesForName(t.Name)
 	for _, rule := range rules {
-		items, remainingTokens, err = rule.Parse(g, tokens)
+		items, remainingTokens, err = rule.Parse(g, tokens, pd)
 
 		if err == nil {
 			return
@@ -188,6 +197,7 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainin
 			}
 			items = []Node{st}
 			remainingTokens = tokens[1:]
+            pd.AcceptUpTo(remainingTokens)
 			return
 		}
         err = fmt.Errorf("Could not turn %v into %s.", tokens[0], t.Name)
@@ -199,13 +209,13 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainin
 	return
 }
 
-func (t TagTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+func (t TagTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	items = []Node{Tag(t.Tag)}
 	remainingTokens = tokens
 	return
 }
 
-func (t LiteralTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTokens []Token, err error) {
+func (t LiteralTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("LiteralTerm(%q)", t.Literal)
 	tr.In(rName, tokens)
 	defer func() {
@@ -239,6 +249,7 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token) (items []Node, remainingTo
 	}
 	items = []Node{Literal(literalText)}
 	remainingTokens = tokens[1:]
+    pd.AcceptUpTo(remainingTokens)
 	return
 }
 
