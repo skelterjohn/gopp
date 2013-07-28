@@ -175,7 +175,7 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainin
 			return
 		}
 	}
-
+    err = nil
 	if _, ok := g.Symbol(t.Name); ok {
 		if len(tokens) < 1 {
 			err = errors.New("Need at least one token to make a symbol.")
@@ -190,6 +190,8 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token) (items []Node, remainin
 			remainingTokens = tokens[1:]
 			return
 		}
+        err = fmt.Errorf("Could not turn %v into %s.", tokens[0], t.Name)
+        return
 	}
 
 	err = fmt.Errorf("Unknown rule name: %q.", t.Name)

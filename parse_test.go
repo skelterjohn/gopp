@@ -42,138 +42,6 @@ func printNode(node Node, indentCount int) {
 	}
 }
 
-func TestParseRuleGrammar(t *testing.T) {
-	grammarRule := ByHandGoppAST[2].([]Node)[0]
-	byHandAST := mkGrammar(
-		[]Node{grammarRule},
-		[]Node{
-			mkSymbol("w", "z"),
-		},
-	)
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`
-Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+
-w = /z/
-`))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	start := ByHandGrammar.RulesForName("Grammar")[0]
-	// tr.Enabled = true
-	items, remaining, err := start.Parse(ByHandGrammar, tokens)
-	// tr.Enabled = false
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(remaining) != 0 {
-		t.Errorf("Leftover tokens: %v.", remaining)
-	}
-
-	dig := func(top AST) interface{} {
-		return top //[2].([]Node)[0].([]Node)[4].([]Node)[0].([]Node)[1]
-	}
-
-	if false {
-		fmt.Println("byhand")
-		printNode(dig(byHandAST), 0)
-		fmt.Println("generated")
-		printNode(dig(AST(items)), 0)
-	}
-
-	if !reflect.DeepEqual(dig(byHandAST), dig(AST(items))) {
-		t.Error("Generated AST doesn't match by-hand AST.")
-	}
-}
-
-func TestParseRuleRule(t *testing.T) {
-	grammarRule := ByHandGoppAST[2].([]Node)[1]
-	byHandAST := mkGrammar(
-		[]Node{grammarRule},
-		[]Node{
-			mkSymbol("w", "z"),
-		},
-	)
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`
-Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+
-w = /z/
-`))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	start := ByHandGrammar.RulesForName("Grammar")[0]
-	// tr.Enabled = true
-	items, remaining, err := start.Parse(ByHandGrammar, tokens)
-	// tr.Enabled = false
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(remaining) != 0 {
-		t.Errorf("Leftover tokens: %v.", remaining)
-	}
-
-	dig := func(top AST) interface{} {
-		return top //[2].([]Node)[0].([]Node)[4].([]Node)[0].([]Node)[1]
-	}
-
-	if false {
-		fmt.Println("byhand")
-		printNode(dig(byHandAST), 0)
-		fmt.Println("generated")
-		printNode(dig(AST(items)), 0)
-	}
-
-	if !reflect.DeepEqual(dig(byHandAST), dig(AST(items))) {
-		t.Error("Generated AST doesn't match by-hand AST.")
-	}
-}
-
-func TestParseRuleSymbol(t *testing.T) {
-	grammarRule := ByHandGoppAST[2].([]Node)[2]
-	byHandAST := mkGrammar(
-		[]Node{grammarRule},
-		[]Node{
-			mkSymbol("w", "z"),
-		},
-	)
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`
-Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
-w = /z/
-`))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	start := ByHandGrammar.RulesForName("Grammar")[0]
-	// tr.Enabled = true
-	items, remaining, err := start.Parse(ByHandGrammar, tokens)
-	// tr.Enabled = false
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(remaining) != 0 {
-		t.Errorf("Leftover tokens: %v.", remaining)
-	}
-
-	dig := func(top AST) interface{} {
-		return top //[2].([]Node)[0].([]Node)[4].([]Node)[0].([]Node)[1]
-	}
-
-	if false {
-		fmt.Println("byhand")
-		printNode(dig(byHandAST), 0)
-		fmt.Println("generated")
-		printNode(dig(AST(items)), 0)
-	}
-
-	if !reflect.DeepEqual(dig(byHandAST), dig(AST(items))) {
-		t.Error("Generated AST doesn't match by-hand AST.")
-	}
-}
-
 type textByHand struct {
 	Name   string
 	Text   string
@@ -181,10 +49,15 @@ type textByHand struct {
 }
 
 var rulesTextAndByHand = []textByHand{
-	{
+    {
 		"Grammar",
-		"Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+",
+		`Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+`,
 		ByHandGoppAST[2].([]Node)[0],
+	},
+    {
+		"Rule",
+		`Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+`,
+		ByHandGoppAST[2].([]Node)[1],
 	},
 }
 
@@ -197,10 +70,11 @@ func TestParseRulesIndividual(t *testing.T) {
 				mkSymbol("w", "z"),
 			},
 		)
+        
 		txt := "\n" + th.Text + "\nw = /z/\n"
 		tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(txt))
 		if err != nil {
-			t.Error(err)
+			t.Errorf("%s: %s", th.Name, err)
 			return
 		}
 		start := ByHandGrammar.RulesForName(th.Name)[0]
@@ -209,17 +83,17 @@ func TestParseRulesIndividual(t *testing.T) {
 		// tr.Enabled = false
 		if err != nil {
 			t.Error(err)
-			return
+            return
 		}
 		if len(remaining) != 0 {
-			t.Errorf("Leftover tokens: %v.", remaining)
+			t.Errorf("%s: leftover tokens: %v.", th.Name, remaining)
 		}
 
 		dig := func(top AST) interface{} {
 			return top //[2].([]Node)[0].([]Node)[4].([]Node)[0].([]Node)[1]
 		}
-
-		if true {
+        
+		if false {
 			fmt.Println("byhand")
 			printNode(dig(byHandAST), 0)
 			fmt.Println("generated")
@@ -227,7 +101,7 @@ func TestParseRulesIndividual(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(dig(byHandAST), dig(AST(items))) {
-			t.Error("Generated AST doesn't match by-hand AST.")
+			t.Errorf("%s: Generated AST doesn't match by-hand AST.", th.Name)
 		}
 	}
 }
