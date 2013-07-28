@@ -4,7 +4,7 @@ Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+
 
 Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
 
-Expr => <Term>+
+Expr => <<Term>>+
 
 Term => <Term1>
 Term => <Term2>

@@ -49,6 +49,9 @@ func Tokenize(res []TypedRegexp, r io.Reader) (tokens []Token, err error) {
 			}
 			if len(matches) > 1 {
 				token.Text = string(matches[1])
+				if err != nil {
+					return
+				}
 			}
 			buf.Read(matches[0])
 			tokens = append(tokens, token)

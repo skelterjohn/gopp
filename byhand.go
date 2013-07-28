@@ -1,5 +1,9 @@
 package gopp
 
+import (
+	"strconv"
+)
+
 /*
 Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+
 
@@ -73,7 +77,7 @@ var ByHandGrammar = Grammar{
 			Name: "Expr",
 			Expr: Expr{
 				RepeatOneTerm{
-					InlineRuleTerm{Name: "Term"},
+					RuleTerm{Name: "Term"},
 				},
 			},
 		},
@@ -206,9 +210,11 @@ func mkt(text string) SymbolText {
 }
 
 func mkl(text string) SymbolText {
+	quoted := strconv.Quote(text)
+	quoted = quoted[1 : len(quoted)-1]
 	return SymbolText{
 		Type: "literal",
-		Text: text,
+		Text: quoted,
 	}
 }
 
@@ -252,7 +258,7 @@ func mkSymbol(name, pattern string) []Node {
 }
 
 func mkExpr(nodes ...Node) []Node {
-	return nodes
+	return []Node{nodes}
 }
 func mkRepeatZeroTerm(node Node) []Node {
 	return []Node{
@@ -277,7 +283,7 @@ func mkOptionalTerm(node Node) []Node {
 		Tag("type=OptionalTerm"),
 		Literal("["),
 		Tag("field=Expr"),
-		[]Node{node},
+		mkExpr(node),
 		Literal("]"),
 	}
 }
@@ -305,7 +311,7 @@ func mkInlineRuleTerm(text string) []Node {
 func mkTagTerm(text string) []Node {
 	return []Node{
 		Tag("type=TagTerm"),
-		Tag("field=."),
+		Tag("field=Tag"),
 		mkt(text),
 	}
 }
@@ -322,11 +328,11 @@ var ByHandGoppAST = mkGrammar(
 	[]Node{
 		mkRule("Grammar",
 			mkRepeatZeroTerm(mkLiteralTerm("\n")),
-			Tag("field=Rules"),
+			mkTagTerm("field=Rules"),
 			mkRepeatOneTerm(
 				mkRuleTerm("Rule"),
 			),
-			Tag("field=Symbols"),
+			mkTagTerm("field=Symbols"),
 			mkRepeatOneTerm(
 				mkRuleTerm("Symbol"),
 			),
