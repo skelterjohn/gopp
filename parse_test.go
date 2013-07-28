@@ -82,7 +82,7 @@ type textByHand struct {
 var rulesTextAndByHand = []textByHand{
 	{
 		"Grammar",
-		`Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+`,
+		`Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*`,
 		ByHandGoppAST[2].([]Node)[0],
 	},
 	{

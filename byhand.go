@@ -333,7 +333,7 @@ var ByHandGoppAST = mkGrammar(
 				mkRuleTerm("Rule"),
 			),
 			mkTagTerm("field=Symbols"),
-			mkRepeatOneTerm(
+			mkRepeatZeroTerm(
 				mkRuleTerm("Symbol"),
 			),
 		),
