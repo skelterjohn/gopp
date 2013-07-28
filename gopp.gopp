@@ -1,4 +1,4 @@
-Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+
+Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 
 Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+
 

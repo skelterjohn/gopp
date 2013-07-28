@@ -42,6 +42,37 @@ func printNode(node Node, indentCount int) {
 	}
 }
 
+func compareNodes(n1, n2 Node) (ok bool, indicesToError []int) {
+	if a, ok := n1.(AST); ok {
+		n1 = []Node(a)
+	}
+	if a, ok := n2.(AST); ok {
+		n2 = []Node(a)
+	}
+	if nl1, isList1 := n1.([]Node); isList1 {
+		if nl2, isList2 := n2.([]Node); isList2 {
+			if len(nl1) != len(nl2) {
+				ok = false
+				return
+			}
+			ok = true
+			for i := range nl1 {
+				var subindices []int
+				ok, subindices = compareNodes(nl1[i], nl2[i])
+				if !ok {
+					indicesToError = append([]int{i}, subindices...)
+					return
+				}
+			}
+			return
+		}
+		ok = false
+		return
+	}
+	ok = n1 == n2
+	return
+}
+
 type textByHand struct {
 	Name   string
 	Text   string
@@ -49,12 +80,12 @@ type textByHand struct {
 }
 
 var rulesTextAndByHand = []textByHand{
-    {
+	{
 		"Grammar",
 		`Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+`,
 		ByHandGoppAST[2].([]Node)[0],
 	},
-    {
+	{
 		"Rule",
 		`Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+`,
 		ByHandGoppAST[2].([]Node)[1],
@@ -66,43 +97,52 @@ func TestParseRulesIndividual(t *testing.T) {
 		rule := th.ByHand
 		byHandAST := mkGrammar(
 			[]Node{rule},
-			[]Node{
-				mkSymbol("w", "z"),
-			},
+			[]Node{},
 		)
-        
-		txt := "\n" + th.Text + "\nw = /z/\n"
+
+		txt := fmt.Sprintf("\n%s\n", th.Text)
 		tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(txt))
 		if err != nil {
 			t.Errorf("%s: %s", th.Name, err)
 			return
 		}
-		start := ByHandGrammar.RulesForName(th.Name)[0]
+		start := ByHandGrammar.RulesForName("Grammar")[0]
 		// tr.Enabled = true
-        pd := &ParseData{}
+		pd := &ParseData{}
 		items, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
 		// tr.Enabled = false
 		if err != nil {
-			t.Error(err)
-            return
+			fmt.Printf("Remaining: %v\n", pd.TokensForError)
+			for _, err := range pd.FarthestErrors {
+				fmt.Printf(" - %s\n", err)
+			}
+			t.Errorf("%s: %s", th.Name, err)
+			return
 		}
 		if len(remaining) != 0 {
 			t.Errorf("%s: leftover tokens: %v.", th.Name, remaining)
 		}
 
 		dig := func(top AST) interface{} {
-			return top //[2].([]Node)[0].([]Node)[4].([]Node)[0].([]Node)[1]
-		}
-        
-		if false {
-			fmt.Println("byhand")
-			printNode(dig(byHandAST), 0)
-			fmt.Println("generated")
-			printNode(dig(AST(items)), 0)
+			return top
 		}
 
-		if !reflect.DeepEqual(dig(byHandAST), dig(AST(items))) {
-			t.Errorf("%s: Generated AST doesn't match by-hand AST.", th.Name)
+		if false && th.Name == "Grammar" {
+			byhand := dig(byHandAST)
+			gen := dig(AST(items))
+			ok, indices := compareNodes(byhand, gen)
+			if !ok {
+				fmt.Println("byhand")
+				printNode(byhand, 0)
+				fmt.Println("generated")
+				printNode(gen, 0)
+				fmt.Println(ok, indices)
+			}
+		}
+
+		ok, indices := compareNodes(dig(byHandAST), dig(AST(items)))
+		if !ok {
+			t.Errorf("%s: Generated AST doesn't match by-hand AST at %v.", th.Name, indices)
 		}
 	}
 }
@@ -114,7 +154,7 @@ func xTestParseFullGrammar(t *testing.T) {
 		return
 	}
 	start := ByHandGrammar.RulesForName("Grammar")[0]
-        pd := &ParseData{}
+	pd := &ParseData{}
 	_, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
 	if err != nil {
 		t.Error(err)
@@ -147,7 +187,7 @@ w = /z/
 		return
 	}
 	start := ByHandGrammar.RulesForName("Grammar")[0]
-        pd := &ParseData{}
+	pd := &ParseData{}
 	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
 	if err != nil {
 		t.Error(err)
@@ -201,7 +241,7 @@ w = /z/
 		return
 	}
 	start := ByHandGrammar.RulesForName("Grammar")[0]
-        pd := &ParseData{}
+	pd := &ParseData{}
 	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
 	if err != nil {
 		t.Error(err)
@@ -233,7 +273,7 @@ func TestParseSymbol(t *testing.T) {
 		return
 	}
 	term := InlineRuleTerm{Name: "literal"}
-        pd := &ParseData{}
+	pd := &ParseData{}
 	items, _, err := term.Parse(ByHandGrammar, tokens, pd)
 	if err != nil {
 		t.Error(err)
@@ -261,7 +301,7 @@ func TestParseTag(t *testing.T) {
 		return
 	}
 	term := TagTerm{Tag: "hello"}
-        pd := &ParseData{}
+	pd := &ParseData{}
 	items, remaining, err := term.Parse(ByHandGrammar, tokens, pd)
 	if err != nil {
 		t.Error(err)
@@ -289,7 +329,7 @@ func TestParseLiteral(t *testing.T) {
 		return
 	}
 	term := LiteralTerm{Literal: "=>"}
-        pd := &ParseData{}
+	pd := &ParseData{}
 	items, remaining, err := term.Parse(ByHandGrammar, tokens, pd)
 	if err != nil {
 		t.Error(err)

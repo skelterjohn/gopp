@@ -12,13 +12,27 @@ const debug = false
 var tr = debugtags.Tracer{Enabled: false}
 
 type ParseData struct {
-    LastUnacceptedTokens []Token   
+	accepted bool
+	LastUnacceptedTokens []Token
+	errored bool
+	FarthestErrors []error
+	TokensForError []Token
 }
-func (pd *ParseData) AcceptUpTo(tokens []Token) {
-    if len(tokens) < len(pd.LastUnacceptedTokens) {
-        pd.LastUnacceptedTokens = tokens
-    }
-)
+
+func (pd *ParseData) AcceptUpTo(remaining []Token) {
+	if !pd.accepted || len(remaining) < len(pd.LastUnacceptedTokens) {
+		pd.LastUnacceptedTokens = remaining
+	}
+	pd.accepted = true
+}
+
+func (pd *ParseData) ErrorWith(err error, remaining []Token) {
+	if !pd.errored || len(remaining) < len(pd.TokensForError) {
+		pd.FarthestErrors = append(pd.FarthestErrors, err)
+		pd.TokensForError = remaining
+	}
+	pd.errored = true
+}
 
 func (r Rule) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("Rule(%q)", r.Name)
@@ -106,6 +120,7 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []
 	items = []Node{myitems}
 	if len(items) == 0 {
 		err = errors.New("RepeatOneTerm found zero.")
+		pd.ErrorWith(err, tokens)
 	}
 	return
 }
@@ -145,6 +160,7 @@ func (t RuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node,
 	rules := g.RulesForName(t.Name)
 	if len(rules) == 0 {
 		err = fmt.Errorf("Unknown rule name: %q.", t.Name)
+		pd.ErrorWith(err, tokens)
 		return
 	}
 
@@ -184,10 +200,11 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items [
 			return
 		}
 	}
-    err = nil
+	err = nil
 	if _, ok := g.Symbol(t.Name); ok {
 		if len(tokens) < 1 {
 			err = errors.New("Need at least one token to make a symbol.")
+			pd.ErrorWith(err, tokens)
 			return
 		}
 		if t.Name == tokens[0].Type {
@@ -197,14 +214,16 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items [
 			}
 			items = []Node{st}
 			remainingTokens = tokens[1:]
-            pd.AcceptUpTo(remainingTokens)
+			pd.AcceptUpTo(remainingTokens)
 			return
 		}
-        err = fmt.Errorf("Could not turn %v into %s.", tokens[0], t.Name)
-        return
+		err = fmt.Errorf("Could not turn %v into %s.", tokens[0], t.Name)
+		pd.ErrorWith(err, tokens)
+		return
 	}
 
 	err = fmt.Errorf("Unknown rule name: %q.", t.Name)
+	pd.ErrorWith(err, tokens)
 
 	return
 }
@@ -228,10 +247,12 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []No
 
 	if len(tokens) == 0 {
 		err = errors.New("Not enough tokens.")
+		pd.ErrorWith(err, tokens)
 		return
 	}
 	if tokens[0].Type != "RAW" {
 		err = errors.New("Incorrect literal.")
+		pd.ErrorWith(err, tokens)
 		return
 	}
 
@@ -245,11 +266,12 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []No
 
 	if tokens[0].Text != literalText {
 		err = errors.New("Incorrect literal.")
+		pd.ErrorWith(err, tokens)
 		return
 	}
 	items = []Node{Literal(literalText)}
 	remainingTokens = tokens[1:]
-    pd.AcceptUpTo(remainingTokens)
+	pd.AcceptUpTo(remainingTokens)
 	return
 }
 
