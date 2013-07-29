@@ -6,7 +6,71 @@ import (
 	"errors"
 	"strings"
 	"github.com/skelterjohn/debugtags"
+	"io"
 )
+
+type DecoderFactory struct {
+	g Grammar
+	start string
+	types map[string]reflect.Type
+}
+
+func NewDecoderFactory(gopp string, start string) (df *DecoderFactory, err error) {
+	df = &DecoderFactory{
+		start: start,
+		types: map[string]reflect.Type{},
+	}
+	ast, err := Parse(ByHandGrammar, "Grammar", strings.NewReader(gopp))
+	if err != nil {
+		return
+	}
+	sa := NewStructuredAST(ast)
+	sa.RegisterType(RepeatZeroTerm{})
+	sa.RegisterType(RepeatOneTerm{})
+	sa.RegisterType(OptionalTerm{})
+	sa.RegisterType(GroupTerm{})
+	sa.RegisterType(RuleTerm{})
+	sa.RegisterType(InlineRuleTerm{})
+	sa.RegisterType(TagTerm{})
+	sa.RegisterType(LiteralTerm{})
+	err = sa.Decode(&df.g)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (df *DecoderFactory) RegisterType(x interface{}) {
+	typ := reflect.TypeOf(x)
+	df.types[typ.Name()] = typ
+}
+
+func (df *DecoderFactory) NewDecoder(r io.Reader) (d Decoder) {
+	d = Decoder{
+		DecoderFactory: df,
+		Reader: r,
+	}
+	return
+}
+
+type Decoder struct {
+	*DecoderFactory
+	io.Reader
+}
+
+func (d *Decoder) Decode(obj interface{}) (err error) {
+	ast, err := Parse(d.g, d.start, d.Reader)
+	if err != nil {
+		return
+	}
+	sa := NewStructuredAST(ast)
+	sa.types = d.types
+	err = sa.Decode(obj)
+	if err != nil {
+		return
+	}
+	return
+}
 
 func getTagValue(typ string, t Tag) (value string, ok bool) {
 	prefix := typ + "="

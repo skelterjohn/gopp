@@ -7,6 +7,49 @@ import (
 	"testing"
 )
 
+func TestFixedPointDecoder(t *testing.T) {
+	df, err := NewDecoderFactory(goppgopp, "Grammar")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	df.RegisterType(RepeatZeroTerm{})
+	df.RegisterType(RepeatOneTerm{})
+	df.RegisterType(OptionalTerm{})
+	df.RegisterType(GroupTerm{})
+	df.RegisterType(RuleTerm{})
+	df.RegisterType(InlineRuleTerm{})
+	df.RegisterType(TagTerm{})
+	df.RegisterType(LiteralTerm{})
+	var g Grammar
+	dec := df.NewDecoder(strings.NewReader(goppgopp))
+	err = dec.Decode(&g)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = compareGrammars(g, ByHandGrammar)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// now see if the just-populated grammar can generate itself
+	df.g = g
+	dec = df.NewDecoder(strings.NewReader(goppgopp))
+	var g2 Grammar
+	err = dec.Decode(&g2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = compareGrammars(g, g2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
 func TestDecodeGrammar(t *testing.T) {
 	var g Grammar
 	ast, err := Parse(ByHandGrammar, "Grammar", strings.NewReader(goppgopp))
