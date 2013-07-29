@@ -2,6 +2,7 @@ package gopp
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type literalSorter []string
@@ -22,6 +23,18 @@ func (l literalSorter) Less(i, j int) bool {
 		return false
 	}
 	return i < j
+}
+
+func escapeString(s string) (r string) {
+	r = strconv.Quote(s)
+	r = r[1:len(r)-1]
+	return
+}
+
+func descapeString(s string) (r string, err error) {
+	quoted := fmt.Sprintf("\"%s\"", s)
+	r, err = strconv.Unquote(quoted)
+	return
 }
 
 func printNode(node Node, indentCount int) {

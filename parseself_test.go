@@ -26,6 +26,84 @@ func TestDecodeGrammar(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	err = compareGrammars(g, ByHandGrammar)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func compareGrammars(g1, g2 Grammar) (err error) {
+	for i := range g1.Rules {
+		r1 := g1.Rules[i]
+		if len(g2.Rules) <= i {
+			err = fmt.Errorf("Not enough rules in g2: %d.", len(g1.Rules))
+			return
+		}
+		r2 := g2.Rules[i]
+		err = compareRules(r1, r2)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func compareRules(r1, r2 Rule) (err error) {
+	if r1.Name != r2.Name {
+		err = fmt.Errorf("Rule names %q and %q don't match.", r1.Name, r2.Name)
+	}
+	err = compareExprs(r1.Expr, r2.Expr)
+	return
+}
+
+func compareExprs(e1, e2 Expr) (err error) {
+	if len(e1) != len(e2) {
+		err = fmt.Errorf("Expr lengths %d and %d don't match.", len(e1), len(e2))
+		return
+	}
+	for i := range e1 {
+		err = compareTerms(e1[i], e2[i])
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func compareTerms(t1, t2 Term) (err error) {
+	if reflect.TypeOf(t1) != reflect.TypeOf(t2) {
+		err = fmt.Errorf("Term types %T and %T don't match.", t1, t2)
+		return
+	}
+	switch t1 := t1.(type) {
+	case RepeatZeroTerm:
+		err = compareTerms(t1.Term, t2.(RepeatZeroTerm).Term)
+	case RepeatOneTerm:
+		err = compareTerms(t1.Term, t2.(RepeatOneTerm).Term)
+	case LiteralTerm:
+		if t1.Literal != t2.(LiteralTerm).Literal {
+			err = fmt.Errorf("Literals %q and %q don't match.", t1.Literal, t2.(LiteralTerm).Literal)
+			return
+		}
+	case TagTerm:
+		if t1.Tag != t2.(TagTerm).Tag {
+			err = fmt.Errorf("Tags %q and %q don't match.", t1.Tag, t2.(TagTerm).Tag)
+			return
+		}
+	case RuleTerm:
+		if t1.Name != t2.(RuleTerm).Name {
+			err = fmt.Errorf("Names %q and %q don't match.", t1.Name, t2.(RuleTerm).Name)
+			return
+		}
+	case InlineRuleTerm:
+		if t1.Name != t2.(InlineRuleTerm).Name {
+			err = fmt.Errorf("Names %q and %q don't match.", t1.Name, t2.(InlineRuleTerm).Name)
+			return
+		}
+	default:
+		fmt.Printf("%T\n", t1)
+	}
+	return
 }
 
 var ByHandGrammarREs []TypedRegexp

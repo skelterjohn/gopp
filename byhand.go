@@ -1,34 +1,5 @@
 package gopp
 
-import (
-	"strconv"
-)
-
-/*
-Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>+
-
-Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+
-
-Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
-
-Expr => {field=Terms} <<Term>>+
-
-Term => {type=RepeatZeroTerm} {field=Term} <<Term>> '*'
-Term => {type=RepeatOneTerm} {field=Term} <<Term>> '+'
-Term => {type=OptionalTerm} '[' {field=Expr} <<Expr>> ']'
-Term => {type=GroupTerm} '(' {field=Expr} <<Expr>> ')'
-Term => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'
-Term => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'
-Term => {type=TagTerm} '{' {field=Tag} <identifier> '}'
-Term => {type=LiteralTerm} {field=Literal} <literal>
-
-identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
-
-literal = /'((?:[\\']|[^'])+?)'/
-
-regexp = /\/((?:\\/|[^\n])+?)\//
-*/
-
 var ByHandGrammar = Grammar{
 	Rules: []Rule{
 		Rule{ // Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
@@ -47,7 +18,7 @@ var ByHandGrammar = Grammar{
 				},
 			},
 		},
-		Rule{ // Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+
+		Rule{ // Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
 			Name: "Rule",
 			Expr: Expr{
 				TagTerm{Tag: "field=Name"},
@@ -91,6 +62,24 @@ var ByHandGrammar = Grammar{
 			Name: "Term",
 			Expr: Expr{
 				InlineRuleTerm{Name: "Term2"},
+			},
+		},
+		Rule{ // Term => {type=RepeatZeroTerm} {field=Term} <<Term>> '*'
+			Name: "Term1",
+			Expr: Expr{
+				TagTerm{Tag: "type=RepeatZeroTerm"},
+				TagTerm{Tag: "field=Term"},
+				RuleTerm{Name: "Term2"},
+				LiteralTerm{Literal: "*"},
+			},
+		},
+		Rule{ // Term => {type=RepeatOneTerm} {field=Term} <<Term>> '+'
+			Name: "Term1",
+			Expr: Expr{
+				TagTerm{Tag: "type=RepeatOneTerm"},
+				TagTerm{Tag: "field=Term"},
+				RuleTerm{Name: "Term2"},
+				LiteralTerm{Literal: "+"},
 			},
 		},
 		Rule{ // Term => {type=OptionalTerm} '[' {field=Expr} <<Expr>> ']'
@@ -149,24 +138,6 @@ var ByHandGrammar = Grammar{
 				InlineRuleTerm{Name: "literal"},
 			},
 		},
-		Rule{ // Term => {type=RepeatZeroTerm} {field=Term} <<Term>> '*'
-			Name: "Term1",
-			Expr: Expr{
-				TagTerm{Tag: "type=RepeatZeroTerm"},
-				TagTerm{Tag: "field=Term"},
-				RuleTerm{Name: "Term2"},
-				LiteralTerm{Literal: "*"},
-			},
-		},
-		Rule{ // Term => {type=RepeatOneTerm} {field=Term} <<Term>> '+'
-			Name: "Term1",
-			Expr: Expr{
-				TagTerm{Tag: "type=RepeatOneTerm"},
-				TagTerm{Tag: "field=Term"},
-				RuleTerm{Name: "Term2"},
-				LiteralTerm{Literal: "+"},
-			},
-		},
 	},
 	Symbols: []Symbol{
 		Symbol{
@@ -210,11 +181,9 @@ func mkt(text string) SymbolText {
 }
 
 func mkl(text string) SymbolText {
-	quoted := strconv.Quote(text)
-	quoted = quoted[1 : len(quoted)-1]
 	return SymbolText{
 		Type: "literal",
-		Text: quoted,
+		Text: escapeString(text),
 	}
 }
 

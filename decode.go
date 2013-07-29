@@ -146,7 +146,12 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 			err = errors.New("Trying to store non-symbol into string type.")
 			return
 		}
-		v.SetString(st.Text)
+		ds, derr := descapeString(st.Text)
+		if derr == nil {
+			v.SetString(ds)	
+		} else {
+			v.SetString(st.Text)
+		}
 		//dtr.Println(v.Interface())
 	}
 	return

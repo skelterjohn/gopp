@@ -284,9 +284,11 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token, pd *ParseData) (items []No
 	}
 
 	literalText := t.Literal
-	quoted := fmt.Sprintf("\"%s\"", t.Literal)
-	_ = quoted
-	unquoted, qerr := strconv.Unquote(quoted)
+	// quoted := fmt.Sprintf("\"%s\"", t.Literal)
+	// _ = quoted
+	// unquoted, qerr := strconv.Unquote(quoted)
+	unquoted, qerr := descapeString(t.Literal)
+
 	if qerr == nil && false {
 		literalText = unquoted
 	}
