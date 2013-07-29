@@ -207,23 +207,49 @@ func TestParseRulesIndividual(t *testing.T) {
 	}
 }
 
-func xTestParseFullGrammar(t *testing.T) {
+func TestParseFullGrammar(t *testing.T) {
 	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(goppgopp))
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	start := ByHandGrammar.RulesForName("Grammar")[0]
+	// tr.Enabled = true
 	pd := &ParseData{}
-	_, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
+	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
+	// tr.Enabled = false
 	if err != nil {
-		t.Error(err)
+		fmt.Printf("Remaining: %v\n", pd.TokensForError)
+		for _, err := range pd.FarthestErrors {
+			fmt.Printf(" - %s\n", err)
+		}
+		t.Errorf("%s", err)
 		return
 	}
 	if len(remaining) != 0 {
-		t.Error("Leftover tokens: %v.", remaining)
+		t.Errorf("leftover tokens: %v.", remaining)
 	}
-	//printNode(items, 0)
+
+	if false {
+		dig := func(top AST) interface{} {
+			return top
+		}
+		byhand := dig(ByHandGoppAST)
+		gen := dig(AST(items))
+		ok, indices := compareNodes(byhand, gen)
+		if !ok {
+			fmt.Println("byhand")
+			printNode(byhand, 0)
+			fmt.Println("generated")
+			printNode(gen, 0)
+			fmt.Println(ok, indices)
+		}
+	}
+
+	ok, indices := compareNodes(ByHandGoppAST, AST(items))
+	if !ok {
+		t.Errorf("Generated AST doesn't match by-hand AST at %v.", indices)
+	}
 }
 
 func TestParseEasyGrammar(t *testing.T) {
