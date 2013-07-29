@@ -7,6 +7,18 @@ import (
 	"testing"
 )
 
+func xTestDecodeGrammar(t *testing.T) {
+	var g Grammar
+	ast, err := Parse(ByHandGrammar, "Grammar", strings.NewReader(goppgopp))
+	if err != nil {
+		t.Error(err)
+	}
+	err = Decode(ast, &g)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 var ByHandGrammarREs []TypedRegexp
 
 func init() {
@@ -14,31 +26,6 @@ func init() {
 	ByHandGrammarREs, err = ByHandGrammar.TokenREs()
 	if err != nil {
 		panic(err)
-	}
-}
-
-func printNode(node Node, indentCount int) {
-	indent := func(tag string) {
-		for i := 0; i < indentCount; i++ {
-			fmt.Print(" ")
-		}
-		fmt.Println(tag)
-	}
-	switch node := node.(type) {
-	case []Node:
-		indent("[")
-		for _, n := range node {
-			printNode(n, indentCount+1)
-		}
-		indent("]")
-	case AST:
-		indent("[")
-		for _, n := range node {
-			printNode(n, indentCount+1)
-		}
-		indent("]")
-	default:
-		indent(fmt.Sprint(node))
 	}
 }
 
@@ -87,7 +74,7 @@ var rulesTextAndByHand = []textByHand{
 	},
 	{
 		"Rule",
-		`Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+`,
+		`Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+`,
 		ByHandGoppAST[2].([]Node)[1],
 	},
 	{
@@ -122,12 +109,12 @@ var rulesTextAndByHand = []textByHand{
 	},
 	{
 		"Term2.1",
-		`Term2 => {type=OptionalTerm} '[' {field=Expr} <<Expr>> ']'`,
+		`Term2 => {type=OptionalTerm} '[' {field=Expr} <Expr> ']'`,
 		ByHandGoppAST[2].([]Node)[8],
 	},
 	{
 		"Term2.2",
-		`Term2 => {type=GroupTerm} '(' {field=Expr} <<Expr>> ')'`,
+		`Term2 => {type=GroupTerm} '(' {field=Expr} <Expr> ')'`,
 		ByHandGoppAST[2].([]Node)[9],
 	},
 	{
@@ -150,7 +137,6 @@ var rulesTextAndByHand = []textByHand{
 		`Term2 => {type=LiteralTerm} {field=Literal} <literal>`,
 		ByHandGoppAST[2].([]Node)[13],
 	},
-
 }
 
 func TestParseRulesIndividual(t *testing.T) {
@@ -184,7 +170,7 @@ func TestParseRulesIndividual(t *testing.T) {
 			t.Errorf("%s: leftover tokens: %v.", th.Name, remaining)
 		}
 
-		if th.Name == "Expr" {
+		if false && th.Name == "Expr" {
 			dig := func(top AST) interface{} {
 				return top[2].([]Node)[0].([]Node)[4].([]Node)[0]
 			}
@@ -232,7 +218,7 @@ func TestParseFullGrammar(t *testing.T) {
 
 	if false {
 		dig := func(top AST) interface{} {
-			return top
+			return top[2].([]Node)[1].([]Node)[4].([]Node)[4]
 		}
 		byhand := dig(ByHandGoppAST)
 		gen := dig(AST(items))
@@ -283,8 +269,9 @@ w = /z/
 		t.Errorf("Leftover tokens: %v.", remaining)
 	}
 
-	if !reflect.DeepEqual(byHandAST, AST(items)) {
-		t.Error("Generated AST doesn't match by-hand AST.")
+	ok, indices := compareNodes(byHandAST, AST(items))
+	if !ok {
+		t.Errorf("Generated AST doesn't match by-hand AST at %v.", indices)
 	}
 
 	if false {
@@ -337,13 +324,14 @@ w = /z/
 		t.Errorf("Leftover tokens: %v.", remaining)
 	}
 
-	if !reflect.DeepEqual(byHandAST, AST(items)) {
-		t.Error("Generated AST doesn't match by-hand AST.")
+	ok, indices := compareNodes(byHandAST, AST(items))
+	if !ok {
+		t.Errorf("Generated AST doesn't match by-hand AST at %v.", indices)
 	}
 
 	if false {
 		dig := func(top AST) interface{} {
-			return top
+			return top[2].([]Node)[0].([]Node)[4].([]Node)[0]//.([]Node)[3]
 		}
 		fmt.Println("byhand")
 		printNode(dig(byHandAST), 0)

@@ -54,7 +54,7 @@ var ByHandGrammar = Grammar{
 				InlineRuleTerm{Name: "identifier"},
 				LiteralTerm{Literal: "=>"},
 				TagTerm{Tag: "field=Expr"},
-				RuleTerm{Name: "Expr"},
+				InlineRuleTerm{Name: "Expr"},
 				RepeatOneTerm{
 					LiteralTerm{Literal: "\n"},
 				},
@@ -99,7 +99,7 @@ var ByHandGrammar = Grammar{
 				TagTerm{Tag: "type=OptionalTerm"},
 				LiteralTerm{Literal: "["},
 				TagTerm{Tag: "field=Expr"},
-				RuleTerm{Name: "Expr"},
+				InlineRuleTerm{Name: "Expr"},
 				LiteralTerm{Literal: "]"},
 			},
 		},
@@ -109,7 +109,7 @@ var ByHandGrammar = Grammar{
 				TagTerm{Tag: "type=GroupTerm"},
 				LiteralTerm{Literal: "("},
 				TagTerm{Tag: "field=Expr"},
-				RuleTerm{Name: "Expr"},
+				InlineRuleTerm{Name: "Expr"},
 				LiteralTerm{Literal: ")"},
 			},
 		},
@@ -258,7 +258,7 @@ func mkSymbol(name, pattern string) []Node {
 }
 
 func mkExpr(nodes ...Node) []Node {
-	return []Node{nodes}
+	return nodes
 }
 func mkRepeatZeroTerm(node Node) []Node {
 	return []Node{
@@ -342,7 +342,7 @@ var ByHandGoppAST = mkGrammar(
 			mkInlineRuleTerm("identifier"),
 			mkLiteralTerm("=>"),
 			mkTagTerm("field=Expr"),
-			mkRuleTerm("Expr"),
+			mkInlineRuleTerm("Expr"),
 			mkRepeatOneTerm(mkLiteralTerm("\n")),
 		),
 		mkRule("Symbol",
@@ -378,14 +378,14 @@ var ByHandGoppAST = mkGrammar(
 			mkTagTerm("type=OptionalTerm"),
 			mkLiteralTerm("["),
 			mkTagTerm("field=Expr"),
-			mkRuleTerm("Expr"),
+			mkInlineRuleTerm("Expr"),
 			mkLiteralTerm("]"),
 		),
 		mkRule("Term2",
 			mkTagTerm("type=GroupTerm"),
 			mkLiteralTerm("("),
 			mkTagTerm("field=Expr"),
-			mkRuleTerm("Expr"),
+			mkInlineRuleTerm("Expr"),
 			mkLiteralTerm(")"),
 		),
 		mkRule("Term2",

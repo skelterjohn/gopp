@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/skelterjohn/debugtags"
-	"strconv"
 	"io"
+	"strconv"
 )
 
 func Parse(g Grammar, startRule string, r io.Reader) (ast AST, err error) {
@@ -20,7 +20,7 @@ func Parse(g Grammar, startRule string, r io.Reader) (ast AST, err error) {
 	start := ByHandGrammar.RulesForName(startRule)[0]
 	pd := &ParseData{}
 	items, remaining, err := start.Parse(g, tokens, pd)
-	
+
 	if err != nil {
 		// TODO: use pd to return informative error messages.
 		return
@@ -39,11 +39,11 @@ const debug = false
 var tr = debugtags.Tracer{Enabled: false}
 
 type ParseData struct {
-	accepted bool
+	accepted             bool
 	LastUnacceptedTokens []Token
-	errored bool
-	FarthestErrors []error
-	TokensForError []Token
+	errored              bool
+	FarthestErrors       []error
+	TokensForError       []Token
 }
 
 func (pd *ParseData) AcceptUpTo(remaining []Token) {
