@@ -80,7 +80,16 @@ func TestMath(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if eqn.String() != "5+1=6" {
-		t.Errorf("Expected %q, got %q.", "5+1=6", eqn)
+
+	expectedEqn := MathEqn{
+		Left: MathSum{
+			First:MathNumberFactor{"5"},
+			Second:MathNumberFactor{"1"},
+		},
+		Right: MathNumberFactor{"6"},
+	}
+
+	if eqn != expectedEqn {
+		t.Errorf("Expected %q, got %q.", expectedEqn, eqn)
 	}
 }
