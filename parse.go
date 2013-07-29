@@ -5,7 +5,34 @@ import (
 	"fmt"
 	"github.com/skelterjohn/debugtags"
 	"strconv"
+	"io"
 )
+
+func Parse(g Grammar, startRule string, r io.Reader) (ast AST, err error) {
+	tokenREs, err := g.TokenREs()
+	if err != nil {
+		return
+	}
+	tokens, err := Tokenize(tokenREs, r)
+	if err != nil {
+		return
+	}
+	start := ByHandGrammar.RulesForName(startRule)[0]
+	pd := &ParseData{}
+	items, remaining, err := start.Parse(g, tokens, pd)
+	
+	if err != nil {
+		// TODO: use pd to return informative error messages.
+		return
+	}
+	if len(remaining) != 0 {
+		err = errors.New("Did not parse entire file.")
+	}
+
+	ast = items
+
+	return
+}
 
 const debug = false
 
