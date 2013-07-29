@@ -17,7 +17,12 @@ func Parse(g Grammar, startRule string, r io.Reader) (ast AST, err error) {
 	if err != nil {
 		return
 	}
-	start := ByHandGrammar.RulesForName(startRule)[0]
+	rules := g.RulesForName(startRule)
+	if len(rules) != 1 {
+		err = fmt.Errorf("Rule %q had %d definitions.", startRule, len(rules))
+		return
+	}
+	start := rules[0]
 	pd := &ParseData{}
 	items, remaining, err := start.Parse(g, tokens, pd)
 
