@@ -90,6 +90,67 @@ var rulesTextAndByHand = []textByHand{
 		`Rule => {field=Name} <identifier> '=>' {field=Expr} <<Expr>> '\n'+`,
 		ByHandGoppAST[2].([]Node)[1],
 	},
+	{
+		"Symbol",
+		`Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+`,
+		ByHandGoppAST[2].([]Node)[2],
+	},
+	{
+		"Expr",
+		`Expr => <<Term>>+`,
+		ByHandGoppAST[2].([]Node)[3],
+	},
+	{
+		"Term.1",
+		`Term => <Term1>`,
+		ByHandGoppAST[2].([]Node)[4],
+	},
+	{
+		"Term.2",
+		`Term => <Term2>`,
+		ByHandGoppAST[2].([]Node)[5],
+	},
+	{
+		"Term1.1",
+		`Term1 => {type=RepeatZeroTerm} {field=Term} <<Term2>> '*'`,
+		ByHandGoppAST[2].([]Node)[6],
+	},
+	{
+		"Term1.2",
+		`Term1 => {type=RepeatOneTerm} {field=Term} <<Term2>> '+'`,
+		ByHandGoppAST[2].([]Node)[7],
+	},
+	{
+		"Term2.1",
+		`Term2 => {type=OptionalTerm} '[' {field=Expr} <<Expr>> ']'`,
+		ByHandGoppAST[2].([]Node)[8],
+	},
+	{
+		"Term2.2",
+		`Term2 => {type=GroupTerm} '(' {field=Expr} <<Expr>> ')'`,
+		ByHandGoppAST[2].([]Node)[9],
+	},
+	{
+		"Term2.3",
+		`Term2 => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'`,
+		ByHandGoppAST[2].([]Node)[10],
+	},
+	{
+		"Term2.4",
+		`Term2 => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'`,
+		ByHandGoppAST[2].([]Node)[11],
+	},
+	{
+		"Term2.5",
+		`Term2 => {type=TagTerm} {field=Tag} <tag>`,
+		ByHandGoppAST[2].([]Node)[12],
+	},
+	{
+		"Term2.6",
+		`Term2 => {type=LiteralTerm} {field=Literal} <literal>`,
+		ByHandGoppAST[2].([]Node)[13],
+	},
+
 }
 
 func TestParseRulesIndividual(t *testing.T) {
@@ -123,11 +184,10 @@ func TestParseRulesIndividual(t *testing.T) {
 			t.Errorf("%s: leftover tokens: %v.", th.Name, remaining)
 		}
 
-		dig := func(top AST) interface{} {
-			return top
-		}
-
-		if false && th.Name == "Grammar" {
+		if th.Name == "Expr" {
+			dig := func(top AST) interface{} {
+				return top[2].([]Node)[0].([]Node)[4].([]Node)[0]
+			}
 			byhand := dig(byHandAST)
 			gen := dig(AST(items))
 			ok, indices := compareNodes(byhand, gen)
@@ -140,7 +200,7 @@ func TestParseRulesIndividual(t *testing.T) {
 			}
 		}
 
-		ok, indices := compareNodes(dig(byHandAST), dig(AST(items)))
+		ok, indices := compareNodes(byHandAST, AST(items))
 		if !ok {
 			t.Errorf("%s: Generated AST doesn't match by-hand AST at %v.", th.Name, indices)
 		}
