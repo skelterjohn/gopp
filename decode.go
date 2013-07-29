@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"errors"
 	"strings"
+	"github.com/skelterjohn/debugtags"
 )
 
 func getTagValue(typ string, t Tag) (value string, ok bool) {
@@ -18,23 +19,36 @@ func getTagValue(typ string, t Tag) (value string, ok bool) {
 
 var _ = fmt.Println
 
-func Decode(ast AST, obj interface{}) (err error) {
-	return decode([]Node(ast), reflect.ValueOf(obj))
+type StructuredAST struct {
+	ast AST
+	types map[string]reflect.Type
 }
 
-func decode(node Node, v reflect.Value) (err error) {
-	// if we've got a []Node with one element that's also a []Node, just dig deeper
-	if nodes, isNodeSlice := node.([]Node); isNodeSlice {
-		if len(nodes) == 1 {
-			if nodesElem, isNodeSliceSlice := nodes[0].([]Node); isNodeSliceSlice {
-				fmt.Println("dropping deeper")
-				return decode(nodesElem, v)
-			}
-		}
+func NewStructuredAST(ast AST) (sa StructuredAST) {
+	sa = StructuredAST{
+		ast: ast,
+		types: map[string]reflect.Type{},
 	}
+	return
+}
 
-	fmt.Printf("Decoding into a %T\n", v.Interface())
-	fmt.Println(node)
+func (sa StructuredAST) RegisterType(x interface{}) {
+	t := reflect.TypeOf(x)
+	sa.types[t.Name()] = t
+}
+
+func (sa StructuredAST) Decode(obj interface{}) (err error) {
+	return sa.decode([]Node(sa.ast), reflect.ValueOf(obj))
+}
+
+var dtr = debugtags.Tracer{Enabled: false}
+
+func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
+	name := fmt.Sprintf("%T", v.Interface())
+	dtr.In(name, node)
+	defer func() {
+		dtr.Out(name, v.Interface())
+	}()
 
 	typ := v.Type()
 
@@ -66,7 +80,22 @@ func decode(node Node, v reflect.Value) (err error) {
 					if err != nil {
 						return
 					}
-					decode(nodes[i+1], fv)
+
+					if fv.Type().Kind() == reflect.Interface {
+						//dtr.Println("field of interface")
+						var pv reflect.Value
+						pv, err = sa.makePointerWithType(nodes[i+1])
+						if err != nil {
+							return
+						}
+						err = sa.decode(nodes[i+1], pv.Elem())
+						fv.Set(pv.Elem())
+						if err != nil {
+							return
+						}
+					} else {
+						sa.decode(nodes[i+1], fv)
+					}
 				}
 			}
 		}
@@ -76,6 +105,10 @@ func decode(node Node, v reflect.Value) (err error) {
 	if typ.Kind() == reflect.Slice {
 		//fmt.Printf("Going into %s is\n", typ.Elem().Name())
 		//printNode(node, 0)
+		isInterfaceSlice := typ.Elem().Kind() == reflect.Interface
+		// if isInterfaceSlice {
+		// 	dtr.Println("slice of interface")
+		// }
 		nodes, ok := node.([]Node)
 		if !ok {
 			err = errors.New("Need to populate slice via []Node.")
@@ -84,9 +117,22 @@ func decode(node Node, v reflect.Value) (err error) {
 		for _, n := range nodes {
 			// create an addressable value to put in the slice
 			ev := reflect.New(typ.Elem()).Elem()
-			err = decode(n, ev)
-			if err != nil {
-				return
+			if isInterfaceSlice {
+				var pv reflect.Value
+				pv, err = sa.makePointerWithType(n)
+				if err != nil {
+					return
+				}
+				err = sa.decode(n, pv.Elem())
+				ev.Set(pv.Elem())
+				if err != nil {
+					return
+				}
+			} else {
+				err = sa.decode(n, ev)
+				if err != nil {
+					return
+				}
 			}
 			// this is how append looks w/ reflect
 			v.Set(reflect.Append(v, ev))
@@ -101,8 +147,27 @@ func decode(node Node, v reflect.Value) (err error) {
 			return
 		}
 		v.SetString(st.Text)
-		fmt.Println(v.Interface())
+		//dtr.Println(v.Interface())
 	}
+	return
+}
+
+func (sa StructuredAST) makePointerWithType(node Node) (pointer reflect.Value, err error) {
+	var ntag Tag
+	nodes, ok := node.([]Node)
+	if ok && len(nodes) != 0 {
+		ntag, ok = nodes[0].(Tag)
+		if ok {
+			ok = strings.HasPrefix(string(ntag), "type=")
+		}
+	}
+	if !ok {
+		err = errors.New("Can only infer type from []Node with a type= tag.")
+		return
+	}
+	typeName := ntag[len("type="):]
+	typ := sa.types[string(typeName)]
+	pointer = reflect.New(typ)
 	return
 }
 
@@ -112,6 +177,11 @@ func getField(v reflect.Value, field string) (fv reflect.Value, err error) {
 			err = fmt.Errorf("Type %s has no field named %q.", v.Type().Name(), field)
 		}
 	}()
-	fv = v.FieldByName(field)
+	if field == "." {
+		// . means to store the next level deeper in the same value
+		fv = v
+	} else {
+		fv = v.FieldByName(field)
+	}
 	return
 }

@@ -7,13 +7,22 @@ import (
 	"testing"
 )
 
-func xTestDecodeGrammar(t *testing.T) {
+func TestDecodeGrammar(t *testing.T) {
 	var g Grammar
 	ast, err := Parse(ByHandGrammar, "Grammar", strings.NewReader(goppgopp))
 	if err != nil {
 		t.Error(err)
 	}
-	err = Decode(ast, &g)
+	sa := NewStructuredAST(ast)
+	sa.RegisterType(RepeatZeroTerm{})
+	sa.RegisterType(RepeatOneTerm{})
+	sa.RegisterType(OptionalTerm{})
+	sa.RegisterType(GroupTerm{})
+	sa.RegisterType(RuleTerm{})
+	sa.RegisterType(InlineRuleTerm{})
+	sa.RegisterType(TagTerm{})
+	sa.RegisterType(LiteralTerm{})
+	err = sa.Decode(&g)
 	if err != nil {
 		t.Error(err)
 	}

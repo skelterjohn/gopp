@@ -78,6 +78,10 @@ type Rule struct {
 	Expr
 }
 
+func (r Rule) String() string {
+	return fmt.Sprintf("Rule(%s:%v)", r.Name, r.Expr)
+}
+
 type Symbol struct {
 	Name    string
 	Pattern string
@@ -101,16 +105,32 @@ type RepeatZeroTerm struct {
 	Term
 }
 
+func (rzt RepeatZeroTerm) String() string {
+	return fmt.Sprintf("RepeatZeroTerm(%v)", rzt.Term)
+}
+
 type RepeatOneTerm struct {
 	Term
+}
+
+func (rot RepeatOneTerm) String() string {
+	return fmt.Sprintf("RepeatOneTerm(%v)", rot.Term)
 }
 
 type OptionalTerm struct {
 	Expr
 }
 
+func (ot OptionalTerm) String() string {
+	return fmt.Sprintf("OptionalTerm(%v)", ot.Expr)
+}
+
 type GroupTerm struct {
 	Expr
+}
+
+func (gt GroupTerm) String() string {
+	return fmt.Sprintf("GroupTerm(%v)", gt.Expr)
 }
 
 type noLiterals struct{}
@@ -124,9 +144,17 @@ type RuleTerm struct {
 	noLiterals
 }
 
+func (rt RuleTerm) String() string {
+	return fmt.Sprintf("RuleTerm(%s)", rt.Name)
+}
+
 type InlineRuleTerm struct {
 	Name string
 	noLiterals
+}
+
+func (irt InlineRuleTerm) String() string {
+	return fmt.Sprintf("InlineRuleTerm(%s)", irt.Name)
 }
 
 type TagTerm struct {
@@ -134,8 +162,16 @@ type TagTerm struct {
 	noLiterals
 }
 
+func (tt TagTerm) String() string {
+	return fmt.Sprintf("TagTerm(%q)", tt.Tag)
+}
+
 type LiteralTerm struct {
 	Literal string
+}
+
+func (lt LiteralTerm) String() string {
+	return fmt.Sprintf("LiteralTerm(%q)", lt.Literal)
 }
 
 func (l LiteralTerm) CollectLiterals(literals map[string]bool) {
