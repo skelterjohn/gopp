@@ -32,7 +32,7 @@ tag = /\{((?:[\\']|[^'])+?)\}/
 regexp = /\/((?:\\/|[^\n])+?)\//
 ```
 
-* Parsing
+== Parsing ==
 
 In english, from top to bottom,
 ```
@@ -118,7 +118,7 @@ The '*' and '+' operators indicate that the rule should be applied as many times
 
 A tag inserts a gopp.Tag into the tree when evaluated, and is always evaluated successfully when reached. This element is useful for inserting information into the tree that can be looked at by a post-processor. gopp itself makes use of several tags to help it decode into objects, described in the decoding section.
 
-* Decoding
+== Decoding ==
 
 A parsed tree is decoded into an object.
 
