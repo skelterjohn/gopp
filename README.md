@@ -9,6 +9,9 @@ gopp is a library that takes a grammar, specified in .gopp format, a document, a
 
 .gopp is a BNF-like format for describing context-free grammars.
 
+Example
+-------
+
 The following grammar can be used to parse simple arithmetic equations.
 
 ```
