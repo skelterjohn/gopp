@@ -1,7 +1,9 @@
 gopp
 ====
 
-A go parser parser.
+A GO Parser Parser.
+
+Pronounced 'gahp', rather than 'go pee pee'.
 
 gopp is a library that takes a grammar, specified in .gopp format, a document, and an object, parses the document using the grammar, and decodes the resulting tree into the provided object.
 
@@ -103,3 +105,6 @@ A tag is a string surrounded by curly braces.
 regexp = /\/((?:\\/|[^\n])+?)\//
 ```
 A regexp is a string surrounded by forward slashes, provided that any forward slashes inside the string itself are properly escaped.
+
+The ```<<X>>``` and ```<Y>``` indicate recursively evaluated rules and inline rules. A rule will create an AST subtree in its parent. An inline rule will expand its children into its parent, rather than creating a new subtree. In otherword, if the child evaluates to [1,2,3], if that child were from a rule, the parent that already had [a,b,c] would become [a,b,c,[1,2,3]] when adding that child. For an inline rule, that same parent becomes [a,b,c,1,2,3].
+
