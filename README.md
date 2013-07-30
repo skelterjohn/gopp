@@ -9,6 +9,56 @@ gopp is a library that takes a grammar, specified in .gopp format, a document, a
 
 .gopp is a BNF-like format for describing context-free grammars.
 
+The following grammar can be used to parse simple arithmetic equations.
+
+```
+Eqn => {field=Left} <<Expr>> '=' {field=Right} <<Expr>> '\n'
+Expr => {type=MathSum} {field=First} <<Term>> '+' {field=Second} <<Term>>
+Expr => <Term>
+Term => {type=MathProduct} {field=First} <<Factor>> '*' {field=Second} <<Factor>>
+Term => <Factor>
+Factor => {type=MathExprFactor} '(' {field=Expr} <<Expr>> ')'
+Factor => {type=MathNumberFactor} {field=Number} <number>
+number = /(\d+)/
+```
+
+And they will be put into objects of type MathEqn, with the following types defined.
+```
+type MathEqn struct {
+	Left, Right interface{}
+}
+
+type MathSum struct {
+	First, Second interface{}
+}
+
+type MathProduct struct {
+	First, Second interface{}
+}
+
+type MathExprFactor struct {
+	Expr
+}
+
+type MathNumberFactor struct {
+	Number string
+}
+```
+
+So, the document "5+1=6" would get the object
+```
+MathEqn{
+	Left:MathSum{
+		First:MathNumberFactor{"5"},
+		Second:MathNumberFactor{"5"},
+	},
+	Right: MathNumberFactor{"6"},
+}
+```
+
+Grammar
+-------
+
 The following .gopp grammar describes .gopp grammars, and how to decode them into gopp.Grammar objects.
 
 ```
