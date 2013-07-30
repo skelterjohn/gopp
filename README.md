@@ -32,6 +32,8 @@ tag = /\{((?:[\\']|[^'])+?)\}/
 regexp = /\/((?:\\/|[^\n])+?)\//
 ```
 
+* Parsing
+
 In english, from top to bottom,
 ```
 Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
@@ -106,5 +108,22 @@ regexp = /\/((?:\\/|[^\n])+?)\//
 ```
 A regexp is a string surrounded by forward slashes, provided that any forward slashes inside the string itself are properly escaped.
 
-The ```<<X>>``` and ```<Y>``` indicate recursively evaluated rules and inline rules. A rule will create an AST subtree in its parent. An inline rule will expand its children into its parent, rather than creating a new subtree. In otherword, if the child evaluates to [1,2,3], if that child were from a rule, the parent that already had [a,b,c] would become [a,b,c,[1,2,3]] when adding that child. For an inline rule, that same parent becomes [a,b,c,1,2,3].
+The ```<<X>>``` and ```<Y>``` indicate recursively evaluated rules and inline rules. A rule will create an AST subtree in its parent. An inline rule will expand its children into its parent, rather than creating a new subtree. In otherword, if the child evaluates to [1,2,3], if that child were from a rule, the parent that already had [a,b,c] would become [a,b,c,[1,2,3]] when adding that child. For an inline rule, that same parent becomes [a,b,c,1,2,3]. This inlining is useful for keeping trees compact and easy to work with.
 
+Anything within a '[' and ']' is optional: if it cannot be parsed, the parent rule may still successfully parse without the optional component.
+
+Anything within a '(' and ')' is grouped, and external operators (like '*' or '+', or a forthcoming '|') apply to the group as a whole.
+
+The '*' and '+' operators indicate that the rule should be applied as many times as possible, with the '+' requiring at least one successful application for the '+' to succeed.
+
+A tag inserts a gopp.Tag into the tree when evaluated, and is always evaluated successfully when reached. This element is useful for inserting information into the tree that can be looked at by a post-processor. gopp itself makes use of several tags to help it decode into objects, described in the decoding section.
+
+* Decoding
+
+A parsed tree is decoded into an object.
+
+If that object is a slice and the tree is also a slice, each element of the tree-slice is decoded into a new element for the object slice.
+
+If that object is a struct, a tag of the form "{field=X}" indicates that the subsequent tree element should be decoded into the object's .X field. As a special case, "{field=.}" will apply the subsequent tree element to the current object.
+
+If a field or a slice element is an interface type, the tree needs to have a tag of the form "{type=T}", indicating that the type T should be used to allocate the element for decoding. T must have been registered before-hand.
