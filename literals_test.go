@@ -94,7 +94,7 @@ func TestSymbolFailTokenize(t *testing.T) {
 }
 
 var goppgopp = `
-Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+Grammar => {type=Grammar} '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
 Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
 Expr => <<Term>>+

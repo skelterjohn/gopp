@@ -169,6 +169,9 @@ func compareNodes(n1, n2 Node) (ok bool, indicesToError []int) {
 	if nl1, isList1 := n1.([]Node); isList1 {
 		if nl2, isList2 := n2.([]Node); isList2 {
 			if len(nl1) != len(nl2) {
+				fmt.Printf("one has length %d, other %d\n", len(nl1), len(nl2))
+				fmt.Println(nl1)
+				fmt.Println(nl2)
 				ok = false
 				return
 			}
@@ -183,6 +186,7 @@ func compareNodes(n1, n2 Node) (ok bool, indicesToError []int) {
 			}
 			return
 		}
+		fmt.Printf("one is []Node, other is %T\n", n2)
 		ok = false
 		return
 	}
@@ -199,73 +203,73 @@ type textByHand struct {
 var rulesTextAndByHand = []textByHand{
 	{
 		"Grammar",
-		`Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*`,
-		ByHandGoppAST[2].([]Node)[0],
+		`Grammar => {type=Grammar} '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*`,
+		ByHandGoppAST[3].([]Node)[0],
 	},
 	{
 		"Rule",
 		`Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+`,
-		ByHandGoppAST[2].([]Node)[1],
+		ByHandGoppAST[3].([]Node)[1],
 	},
 	{
 		"Symbol",
 		`Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+`,
-		ByHandGoppAST[2].([]Node)[2],
+		ByHandGoppAST[3].([]Node)[2],
 	},
 	{
 		"Expr",
 		`Expr => <<Term>>+`,
-		ByHandGoppAST[2].([]Node)[3],
+		ByHandGoppAST[3].([]Node)[3],
 	},
 	{
 		"Term.1",
 		`Term => <Term1>`,
-		ByHandGoppAST[2].([]Node)[4],
+		ByHandGoppAST[3].([]Node)[4],
 	},
 	{
 		"Term.2",
 		`Term => <Term2>`,
-		ByHandGoppAST[2].([]Node)[5],
+		ByHandGoppAST[3].([]Node)[5],
 	},
 	{
 		"Term1.1",
 		`Term1 => {type=RepeatZeroTerm} {field=Term} <<Term2>> '*'`,
-		ByHandGoppAST[2].([]Node)[6],
+		ByHandGoppAST[3].([]Node)[6],
 	},
 	{
 		"Term1.2",
 		`Term1 => {type=RepeatOneTerm} {field=Term} <<Term2>> '+'`,
-		ByHandGoppAST[2].([]Node)[7],
+		ByHandGoppAST[3].([]Node)[7],
 	},
 	{
 		"Term2.1",
 		`Term2 => {type=OptionalTerm} '[' {field=Expr} <Expr> ']'`,
-		ByHandGoppAST[2].([]Node)[8],
+		ByHandGoppAST[3].([]Node)[8],
 	},
 	{
 		"Term2.2",
 		`Term2 => {type=GroupTerm} '(' {field=Expr} <Expr> ')'`,
-		ByHandGoppAST[2].([]Node)[9],
+		ByHandGoppAST[3].([]Node)[9],
 	},
 	{
 		"Term2.3",
 		`Term2 => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'`,
-		ByHandGoppAST[2].([]Node)[10],
+		ByHandGoppAST[3].([]Node)[10],
 	},
 	{
 		"Term2.4",
 		`Term2 => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'`,
-		ByHandGoppAST[2].([]Node)[11],
+		ByHandGoppAST[3].([]Node)[11],
 	},
 	{
 		"Term2.5",
 		`Term2 => {type=TagTerm} {field=Tag} <tag>`,
-		ByHandGoppAST[2].([]Node)[12],
+		ByHandGoppAST[3].([]Node)[12],
 	},
 	{
 		"Term2.6",
 		`Term2 => {type=LiteralTerm} {field=Literal} <literal>`,
-		ByHandGoppAST[2].([]Node)[13],
+		ByHandGoppAST[3].([]Node)[13],
 	},
 }
 

@@ -5,6 +5,7 @@ var ByHandGrammar = Grammar{
 		Rule{ // Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 			Name: "Grammar",
 			Expr: Expr{ // '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+				TagTerm{Tag: "type=Grammar"},
 				RepeatZeroTerm{
 					LiteralTerm{Literal: "\n"},
 				},
@@ -189,6 +190,7 @@ func mkl(text string) SymbolText {
 
 func mkGrammar(rules, symbols []Node) AST {
 	return []Node{
+		Tag("type=Grammar"),
 		[]Node{
 			Literal("\n"),
 		},
@@ -296,6 +298,7 @@ func mkLiteralTerm(text string) []Node {
 var ByHandGoppAST = mkGrammar(
 	[]Node{
 		mkRule("Grammar",
+			mkTagTerm("type=Grammar"),
 			mkRepeatZeroTerm(mkLiteralTerm("\n")),
 			mkTagTerm("field=Rules"),
 			mkRepeatOneTerm(
