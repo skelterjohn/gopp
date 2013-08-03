@@ -27,15 +27,16 @@ Factor => {type=MathNumberFactor} {field=Number} <number>
 number = /(\d+)/
 ```
 
-A grammar is made up of rules `<<Name>>`, inline rules `<Name>`, literals `'string'`, and tags `{tag}`.
+A grammar is made up of rules ```<<Name>>```, inline rules ```<Name>```, literals ```'string'```, and tags ```{tag}```.
 
-When parsing a document, a rule creates a new subtree as a child of the current tree, and an inline rule creates a new tree and adds its children to the current tree (the difference between [1,2,3,[a,b,c]] and [1,2,3,a,b,c]).
+When parsing a document, a rule creates a new subtree as a child of the current tree, and an inline rule creates a new tree and adds its children to the current tree (the difference between ```[1,2,3,[a,b,c]]``` and ```[1,2,3,a,b,c]```).
 
 Literals are strings that must appear exactly in the document text. To have other kinds of text matched, a .gopp also defines a set of symbols using regular expressions, and they are brought into the main tree by using inline rules.
 
-Tags are elements that are put into the AST if their rule can be parsed. They do not match anything in the actual document text, but they can be used to provide information about the tree structure. For things to be decoded into objects, the "type=" and "field=" tags are used. A "type=" tag tells the decoder what type to allocate in the case that the field or slice element being decoded into is an interface without concrete type. A "field=" tag tells the decoder that, if the current object is a struct, the subtree in the next element is decoded into the field with the given name.
+Tags are elements that are put into the AST if their rule can be parsed. They do not match anything in the actual document text, but they can be used to provide information about the tree structure. For things to be decoded into objects, the "type=" and "field=" tags are used. A "type=" tag tells the decoder what type to allocate in the case that the field or slice element being decoded into is an interface without concrete type. A "field=" tag tells the decoder that, if the current object is a struct, the subtree in the next element is decoded into the field with the given name. Tags can be anything, and can be seen if the AST is accessed directly before decoding.
 
 The grammar above can be used to decode documents into objects of type MathEqn, with the following types defined.
+
 ```
 type MathEqn struct {
 	Left, Right interface{}
@@ -59,6 +60,7 @@ type MathNumberFactor struct {
 ```
 
 So, the document "5+1=6" would get the AST
+
 ```
 AST{
 	Tag("type=MathEqn"),
@@ -100,6 +102,7 @@ AST{
 ```
 
 and the object
+
 ```
 MathEqn{
 	Left:MathSum{
