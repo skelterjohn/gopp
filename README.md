@@ -9,13 +9,15 @@ gopp is a library that takes a grammar, specified in .gopp format, a document, a
 
 .gopp is a BNF-like format for describing context-free grammars.
 
+This README does not attempt to describe the use and purpose of context-free grammars - see google for more information about grammars and recursive descent parsing.
+
 Example
 -------
 
 The following grammar can be used to parse simple arithmetic equations.
 
 ```
-Eqn => {field=Left} <<Expr>> '=' {field=Right} <<Expr>> '\n'
+Eqn => {type=MathEqn} {field=Left} <<Expr>> '=' {field=Right} <<Expr>> '\n'
 Expr => {type=MathSum} {field=First} <<Term>> '+' {field=Second} <<Term>>
 Expr => <Term>
 Term => {type=MathProduct} {field=First} <<Factor>> '*' {field=Second} <<Factor>>
@@ -25,7 +27,15 @@ Factor => {type=MathNumberFactor} {field=Number} <number>
 number = /(\d+)/
 ```
 
-And they will be put into objects of type MathEqn, with the following types defined.
+A grammar is made up of rules `<<Name>>`, inline rules `<Name>`, literals `'string'`, and tags `{tag}`.
+
+When parsing a document, a rule creates a new subtree as a child of the current tree, and an inline rule creates a new tree and adds its children to the current tree (the difference between [1,2,3,[a,b,c]] and [1,2,3,a,b,c]).
+
+Literals are strings that must appear exactly in the document text. To have other kinds of text matched, a .gopp also defines a set of symbols using regular expressions, and they are brought into the main tree by using inline rules.
+
+Tags are elements that are put into the AST if their rule can be parsed. They do not match anything in the actual document text, but they can be used to provide information about the tree structure. For things to be decoded into objects, the "type=" and "field=" tags are used. A "type=" tag tells the decoder what type to allocate in the case that the field or slice element being decoded into is an interface without concrete type. A "field=" tag tells the decoder that, if the current object is a struct, the subtree in the next element is decoded into the field with the given name.
+
+The grammar above can be used to decode documents into objects of type MathEqn, with the following types defined.
 ```
 type MathEqn struct {
 	Left, Right interface{}
@@ -48,7 +58,48 @@ type MathNumberFactor struct {
 }
 ```
 
-So, the document "5+1=6" would get the object
+So, the document "5+1=6" would get the AST
+```
+AST{
+	Tag("type=MathEqn"),
+	Tag("field=Left"),
+	[]Node{
+		Tag("type=MathSum"),
+		Tag("field=First"),
+		[]Node{
+			Tag("type=MathNumberFactor"),
+			Tag("field=Number"),
+			return SymbolText{
+				Type: "number",
+				Text: "5",
+			}
+		},
+		Literal("+"),
+		Tag("field=Second"),
+		[]Node{
+			Tag("type=MathNumberFactor"),
+			Tag("field=Number"),
+			return SymbolText{
+				Type: "number",
+				Text: "1",
+			}
+		},
+	},
+	Literal("=")
+	Tag("field=Right"),
+	[]Node{
+		Tag("type=MathNumberFactor"),
+		Tag("field=Number"),
+		return SymbolText{
+			Type: "number",
+			Text: "6",
+		}
+	},
+	Literal("\n"),
+}
+```
+
+and the object
 ```
 MathEqn{
 	Left:MathSum{
@@ -65,7 +116,7 @@ Grammar
 The following .gopp grammar describes .gopp grammars, and how to decode them into gopp.Grammar objects.
 
 ```
-Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+Grammar => {type=Grammar} '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
 Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
 Expr => <<Term>>+

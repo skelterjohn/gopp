@@ -9,7 +9,7 @@ import (
 // tests where we create a grammar and parse a document
 
 const mathgopp = `
-Eqn => {field=Left} <<Expr>> '=' {field=Right} <<Expr>> '\n'
+Eqn => {type=MathEqn} {field=Left} <<Expr>> '=' {field=Right} <<Expr>> '\n'
 Expr => {type=MathSum} {field=First} <<Term>> '+' {field=Second} <<Term>>
 Expr => <Term>
 Term => {type=MathProduct} {field=First} <<Factor>> '*' {field=Second} <<Factor>>
