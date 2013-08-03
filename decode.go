@@ -136,8 +136,13 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 		}
 		for i := range nodes {
 			if tag, ok := nodes[i].(Tag); ok {
-				name, isField := getTagValue("field", tag)
-				if isField {
+				if typName, isType := getTagValue("type", tag); isType {
+					if typName != typ.Name() {
+						err = fmt.Errorf("AST wants type %q, being decoded to type %q.", typName, typ.Name())
+					}
+				}
+
+				if name, isField := getTagValue("field", tag); isField {
 					// if we have a field tag, that indicates that the next node should be decided into the field with the given name.
 					var fv reflect.Value
 					fv, err = getField(v, name)
@@ -163,6 +168,7 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 				}
 			}
 		}
+		return
 	}
 
 	// map things into slices
@@ -201,6 +207,7 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 			// this is how append looks w/ reflect
 			v.Set(reflect.Append(v, ev))
 		}
+		return
 	}
 
 	// symbols go into strings
@@ -216,8 +223,10 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 		} else {
 			v.SetString(st.Text)
 		}
-		//dtr.Println(v.Interface())
+		return
 	}
+
+	err = fmt.Errorf("Unanticipated type: %s.", typ.Name())
 	return
 }
 
