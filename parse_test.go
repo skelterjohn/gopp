@@ -1,9 +1,10 @@
-package gopp
+package gopp_test
 
 import (
 	"fmt"
 	"strings"
 	"testing"
+	"github.com/skelterjohn/gopp"
 )
 
 // tests where we create a grammar and parse a document
@@ -45,7 +46,7 @@ func (p MathProduct) String() string {
 
 
 type MathExprFactor struct {
-	Expr
+	Expr interface{}
 }
 
 func (ef MathExprFactor) String() string {
@@ -62,9 +63,9 @@ func (nf MathNumberFactor) String() string {
 }
 
 func TestMath(t *testing.T) {
-	
+
 	_ = mathgopp
-	df, err := NewDecoderFactory(mathgopp, "Eqn")
+	df, err := gopp.NewDecoderFactory(mathgopp, "Eqn")
 	if err != nil {
 		t.Error(err)
 		return
