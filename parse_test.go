@@ -2,9 +2,9 @@ package gopp_test
 
 import (
 	"fmt"
+	"github.com/skelterjohn/gopp"
 	"strings"
 	"testing"
-	"github.com/skelterjohn/gopp"
 )
 
 // tests where we create a grammar and parse a document
@@ -44,7 +44,6 @@ func (p MathProduct) String() string {
 	return fmt.Sprintf("%s*%s", p.First, p.Second)
 }
 
-
 type MathExprFactor struct {
 	Expr interface{}
 }
@@ -52,7 +51,6 @@ type MathExprFactor struct {
 func (ef MathExprFactor) String() string {
 	return fmt.Sprintf("(%s)", ef.Expr)
 }
-
 
 type MathNumberFactor struct {
 	Number string
@@ -63,8 +61,6 @@ func (nf MathNumberFactor) String() string {
 }
 
 func TestMath(t *testing.T) {
-
-	_ = mathgopp
 	df, err := gopp.NewDecoderFactory(mathgopp, "Eqn")
 	if err != nil {
 		t.Error(err)
@@ -84,8 +80,8 @@ func TestMath(t *testing.T) {
 
 	expectedEqn := MathEqn{
 		Left: MathSum{
-			First:MathNumberFactor{"5"},
-			Second:MathNumberFactor{"1"},
+			First:  MathNumberFactor{"5"},
+			Second: MathNumberFactor{"1"},
 		},
 		Right: MathNumberFactor{"6"},
 	}

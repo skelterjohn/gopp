@@ -461,7 +461,7 @@ w = /z/
 
 	if false {
 		dig := func(top AST) interface{} {
-			return top[2].([]Node)[0].([]Node)[4].([]Node)[0]//.([]Node)[3]
+			return top[2].([]Node)[0].([]Node)[4].([]Node)[0] //.([]Node)[3]
 		}
 		fmt.Println("byhand")
 		printNode(dig(byHandAST), 0)
