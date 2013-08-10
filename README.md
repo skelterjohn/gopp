@@ -9,7 +9,7 @@ gopp is a library that takes a grammar, specified in .gopp format, a document, a
 
 .gopp is a BNF-like format for describing context-free grammars.
 
-This README does not attempt to describe the use and purpose of context-free grammars - see google for more information about grammars and recursive descent parsing.
+This README does not attempt to describe the use and purpose of context-free grammars - see google for more information about grammars and recursive descent parsing. Or try http://blog.reverberate.org/2013/07/ll-and-lr-parsing-demystified.html.
 
 Example
 -------
