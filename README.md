@@ -119,102 +119,74 @@ Grammar
 The following .gopp grammar describes .gopp grammars, and how to decode them into gopp.Grammar objects.
 
 ```
-Grammar => {type=Grammar} '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+# The first things are lex steps, which are for use by the tokenizer. 
+# Currently the only recognized lex step is stuff to ignore.
+
+# We ignore comments,
+ignore: /^#.*\n/
+# and whitespace that preceeds something more interesting.
+ignore: /^(?:[ \t])+/
+
+# After the lex steps are the rules.
+# The fact that Grammar is first is irrelevant. The name of the starting rule
+# needs to be provided in code.
+# A Grammar is made up of lists of LexSteps, Rules, and Symbols, in that order,
+# and there may be zero LexSteps or Symbols. There must be at least one Rule.
+Grammar => {type=Grammar} '\n'* {field=LexSteps} <<LexStep>>* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+
+# The next three rules define the major types of elements in a grammar.
+
+# A LexStep is an identifier, a literal ':', and a regexp pattern. If the name
+# is 'ignore', then when the lexer goes to get the next token, it will try to
+# trim the remaining document using the provided pattern. No other names are
+# used, currently.
+LexStep => {field=Name} <identifier> ':' {field=Pattern} <regexp> '\n'+
+
+# A Rule is an identifier, a literal '=>', an Expr, and ends with one or more
+# newlines.
 Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
+# A Symbol is an identifier, a literal '=', a regexp, and ends with one or more
+# newlines.
 Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
+
+# An Expr is one or more Terms.
 Expr => <<Term>>+
+
+# A Term can be a Term1,
 Term => <Term1>
+# or a Term2.
 Term => <Term2>
+
+# A Term1 can be a Term2 followed by a literal '*',
 Term1 => {type=RepeatZeroTerm} {field=Term} <<Term2>> '*'
+# or a Term2 followd by a literal '+'.
 Term1 => {type=RepeatOneTerm} {field=Term} <<Term2>> '+'
+
+# A Term2 can be an Expr surrounded by '[' and ']',
 Term2 => {type=OptionalTerm} '[' {field=Expr} <Expr> ']'
+# or by '(' and ')',
 Term2 => {type=GroupTerm} '(' {field=Expr} <Expr> ')'
+# or an identifier surrounded by '<<' and '>>',
 Term2 => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'
+# or by '<' and '>',
 Term2 => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'
+# or a tag,
 Term2 => {type=TagTerm} {field=Tag} <tag>
+# or a literal.
 Term2 => {type=LiteralTerm} {field=Literal} <literal>
+
+# And last is the symbols, which are regular expressions that can be found in
+# the document. Their order is important - it indicates the order in which the
+# tokenizer attempts to match them against the rest of the document. So, if two
+# symbols could be used starting at the same point in the document, the one
+# that is listed first will win.
 identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
 literal = /'((?:[\\']|[^'])+?)'/
 tag = /\{((?:[\\']|[^'])+?)\}/
 regexp = /\/((?:\\/|[^\n])+?)\//
+
 ```
 
-Parsing
--------
-
-In english, from top to bottom,
-```
-Grammar => '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
-```
-A "Grammar" is made up of one or more "Rule"s followed by some "Symbol"s.
-```
-Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
-```
-A "Rule" is an identifier, followed by a literal '=>', followed by an Expr, and ends with a newline.
-```
-Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
-```
-A "Symbol" is an identifier, followed by a literal '=', followed by a regexp, and ends with a newline.
-```
-Expr => <<Term>>+
-```
-An "Expr" is made up of one ore more "Term"s.
-```
-Term => <Term1>
-```
-A "Term" can be either a "Term1",
-```
-Term => <Term2>
-```
-or a "Term2".
-```
-Term1 => {type=RepeatZeroTerm} {field=Term} <<Term2>> '*'
-```
-A "Term1" can be a "Term2" followed by a literal '*',
-```
-Term1 => {type=RepeatOneTerm} {field=Term} <<Term2>> '+'
-```
-or a "Term2" followed by a literal '+'.
-```
-Term2 => {type=OptionalTerm} '[' {field=Expr} <Expr> ']'
-```
-A "Term2" can be a literal '[', then an "Expr", then a literal ']',
-```
-Term2 => {type=GroupTerm} '(' {field=Expr} <Expr> ')'
-```
-or '(', ')' instead of '[', ']',
-```
-Term2 => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'
-```
-or a literal '<<', followed by an identifier, followed by a literal '>>',
-```
-Term2 => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'
-```
-or '<', '>', instead of '<<', '>>',
-```
-Term2 => {type=TagTerm} {field=Tag} <tag>
-```
-or a tag,
-```
-Term2 => {type=LiteralTerm} {field=Literal} <literal>
-```
-or a literal.
-```
-identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
-```
-An identifier is a letter followed by some number or letters, digits or underscores.
-```
-literal = /'((?:[\\']|[^'])+?)'/
-```
-A literal is any string inside single quotes, provided that any single quotes in the string itself are properly escaped.
-```
-tag = /\{((?:[\\']|[^'])+?)\}/
-```
-A tag is a string surrounded by curly braces.
-```
-regexp = /\/((?:\\/|[^\n])+?)\//
-```
-A regexp is a string surrounded by forward slashes, provided that any forward slashes inside the string itself are properly escaped.
 
 The ```<<X>>``` and ```<Y>``` indicate recursively evaluated rules and inline rules. A rule will create an AST subtree in its parent. An inline rule will expand its children into its parent, rather than creating a new subtree. In otherword, if the child evaluates to [1,2,3], if that child were from a rule, the parent that already had [a,b,c] would become [a,b,c,[1,2,3]] when adding that child. For an inline rule, that same parent becomes [a,b,c,1,2,3]. This inlining is useful for keeping trees compact and easy to work with.
 

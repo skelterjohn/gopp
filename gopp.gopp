@@ -7,30 +7,58 @@ ignore: /^#.*\n/
 ignore: /^(?:[ \t])+/
 
 # After the lex steps are the rules.
-# The fact that Grammar is first is irrelevant. The name of the starting rule needs to be provided in code.
+# The fact that Grammar is first is irrelevant. The name of the starting rule
+# needs to be provided in code.
+# A Grammar is made up of lists of LexSteps, Rules, and Symbols, in that order,
+# and there may be zero LexSteps or Symbols. There must be at least one Rule.
 Grammar => {type=Grammar} '\n'* {field=LexSteps} <<LexStep>>* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 
-# These next three rules define the major types of elements in a grammar.
+# The next three rules define the major types of elements in a grammar.
+
+# A LexStep is an identifier, a literal ':', and a regexp pattern. If the name
+# is 'ignore', then when the lexer goes to get the next token, it will try to
+# trim the remaining document using the provided pattern. No other names are
+# used, currently.
 LexStep => {field=Name} <identifier> ':' {field=Pattern} <regexp> '\n'+
+
+# A Rule is an identifier, a literal '=>', an Expr, and ends with one or more
+# newlines.
 Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
+# A Symbol is an identifier, a literal '=', a regexp, and ends with one or more
+# newlines.
 Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
 
+# An Expr is one or more Terms.
 Expr => <<Term>>+
 
+# A Term can be a Term1,
 Term => <Term1>
+# or a Term2.
 Term => <Term2>
 
+# A Term1 can be a Term2 followed by a literal '*',
 Term1 => {type=RepeatZeroTerm} {field=Term} <<Term2>> '*'
+# or a Term2 followd by a literal '+'.
 Term1 => {type=RepeatOneTerm} {field=Term} <<Term2>> '+'
+
+# A Term2 can be an Expr surrounded by '[' and ']',
 Term2 => {type=OptionalTerm} '[' {field=Expr} <Expr> ']'
+# or by '(' and ')',
 Term2 => {type=GroupTerm} '(' {field=Expr} <Expr> ')'
+# or an identifier surrounded by '<<' and '>>',
 Term2 => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'
+# or by '<' and '>',
 Term2 => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'
+# or a tag,
 Term2 => {type=TagTerm} {field=Tag} <tag>
+# or a literal.
 Term2 => {type=LiteralTerm} {field=Literal} <literal>
 
-# And last is the symbols. They're regular expressions that, when matched, are stamped with
-# the symbol name (to the left of the '='), and the first group is made easily accessible.
+# And last is the symbols, which are regular expressions that can be found in
+# the document. Their order is important - it indicates the order in which the
+# tokenizer attempts to match them against the rest of the document. So, if two
+# symbols could be used starting at the same point in the document, the one
+# that is listed first will win.
 identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
 literal = /'((?:[\\']|[^'])+?)'/
 tag = /\{((?:[\\']|[^'])+?)\}/
