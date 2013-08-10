@@ -1,8 +1,16 @@
+# The first things are lex steps, which are for use by the tokenizer. 
+# Currently the only recognized lex step is stuff to ignore.
+
+# We ignore comments,
 ignore: /^#.*\n/
+# and whitespace that preceeds something more interesting.
 ignore: /^(?:[ \t])+/
 
+# After the lex steps are the rules.
+# The fact that Grammar is first is irrelevant. The name of the starting rule needs to be provided in code.
 Grammar => {type=Grammar} '\n'* {field=LexSteps} <<LexStep>>* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 
+# These next three rules define the major types of elements in a grammar.
 LexStep => {field=Name} <identifier> ':' {field=Pattern} <regexp> '\n'+
 Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
 Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
@@ -21,6 +29,8 @@ Term2 => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'
 Term2 => {type=TagTerm} {field=Tag} <tag>
 Term2 => {type=LiteralTerm} {field=Literal} <literal>
 
+# And last is the symbols. They're regular expressions that, when matched, are stamped with
+# the symbol name (to the left of the '='), and the first group is made easily accessible.
 identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
 literal = /'((?:[\\']|[^'])+?)'/
 tag = /\{((?:[\\']|[^'])+?)\}/

@@ -94,6 +94,7 @@ func TestSymbolFailTokenize(t *testing.T) {
 }
 
 var goppgopp = `
+# a comment to ignore
 ignore: /^#.*\n/
 ignore: /^(?:[ \t])+/
 Grammar => {type=Grammar} '\n'* {field=LexSteps} <<LexStep>>* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
