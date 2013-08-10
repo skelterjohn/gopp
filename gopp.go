@@ -10,8 +10,9 @@ import (
 const REGEXP_PREFIX = `^(?: )*`
 
 type Grammar struct {
-	Rules   []Rule
-	Symbols []Symbol
+	LexSteps []LexStep
+	Rules    []Rule
+	Symbols  []Symbol
 }
 
 func (g Grammar) RulesForName(name string) (rs []Rule) {
@@ -71,6 +72,11 @@ func (g Grammar) TokenREs() (res []TypedRegexp, err error) {
 		res = append(res, TypedRegexp{symbol.Name, re})
 	}
 	return
+}
+
+type LexStep struct {
+	Name    string
+	Pattern string
 }
 
 type Rule struct {

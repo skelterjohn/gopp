@@ -9,6 +9,10 @@ var ByHandGrammar = Grammar{
 				RepeatZeroTerm{
 					LiteralTerm{Literal: "\n"},
 				},
+				TagTerm{Tag: "field=LexSteps"},
+				RepeatZeroTerm{
+					RuleTerm{Name: "LexStep"},
+				},
 				TagTerm{Tag: "field=Rules"},
 				RepeatOneTerm{
 					RuleTerm{Name: "Rule"},
@@ -16,6 +20,19 @@ var ByHandGrammar = Grammar{
 				TagTerm{Tag: "field=Symbols"},
 				RepeatZeroTerm{
 					RuleTerm{Name: "Symbol"},
+				},
+			},
+		},
+		Rule{ // Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
+			Name: "LexStep",
+			Expr: Expr{
+				TagTerm{Tag: "field=Name"},
+				InlineRuleTerm{Name: "identifier"},
+				LiteralTerm{Literal: ":"},
+				TagTerm{Tag: "field=Pattern"},
+				InlineRuleTerm{Name: "regexp"},
+				RepeatOneTerm{
+					LiteralTerm{Literal: "\n"},
 				},
 			},
 		},
@@ -188,12 +205,14 @@ func mkl(text string) SymbolText {
 	}
 }
 
-func mkGrammar(rules, symbols []Node) AST {
+func mkGrammar(lexsteps, rules, symbols []Node) AST {
 	return []Node{
 		Tag("type=Grammar"),
 		[]Node{
 			Literal("\n"),
 		},
+		Tag("field=LexSteps"),
+		lexsteps,
 		Tag("field=Rules"),
 		rules,
 		Tag("field=Symbols"),
@@ -213,6 +232,19 @@ func mkRule(name string, nodes ...Node) []Node {
 		},
 	}
 	return nodes
+}
+
+func mkLexStep(name, pattern string) []Node {
+	return []Node{
+		Tag("field=Name"),
+		mki(name),
+		Literal(":"),
+		Tag("field=Pattern"),
+		mkr(pattern),
+		[]Node{
+			Literal("\n"),
+		},
+	}
 }
 
 func mkSymbol(name, pattern string) []Node {
@@ -296,10 +328,15 @@ func mkLiteralTerm(text string) []Node {
 }
 
 var ByHandGoppAST = mkGrammar(
+	[]Node{},
 	[]Node{
 		mkRule("Grammar",
 			mkTagTerm("type=Grammar"),
 			mkRepeatZeroTerm(mkLiteralTerm("\n")),
+			mkTagTerm("field=LexSteps"),
+			mkRepeatZeroTerm(
+				mkRuleTerm("LexStep"),
+			),
 			mkTagTerm("field=Rules"),
 			mkRepeatOneTerm(
 				mkRuleTerm("Rule"),
@@ -308,6 +345,14 @@ var ByHandGoppAST = mkGrammar(
 			mkRepeatZeroTerm(
 				mkRuleTerm("Symbol"),
 			),
+		),
+		mkRule("LexStep",
+			mkTagTerm("field=Name"),
+			mkInlineRuleTerm("identifier"),
+			mkLiteralTerm(":"),
+			mkTagTerm("field=Pattern"),
+			mkInlineRuleTerm("regexp"),
+			mkRepeatOneTerm(mkLiteralTerm("\n")),
 		),
 		mkRule("Rule",
 			mkTagTerm("field=Name"),

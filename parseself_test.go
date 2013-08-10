@@ -200,76 +200,85 @@ type textByHand struct {
 	ByHand Node
 }
 
+func getGoppASTRules(ast AST) []Node {
+	return ast[5].([]Node)
+}
+
 var rulesTextAndByHand = []textByHand{
 	{
 		"Grammar",
-		`Grammar => {type=Grammar} '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*`,
-		ByHandGoppAST[3].([]Node)[0],
+		`Grammar => {type=Grammar} '\n'* {field=LexSteps} <<LexStep>>* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*`,
+		getGoppASTRules(ByHandGoppAST)[0],
+	},
+	{
+		"LexStep",
+		`LexStep => {field=Name} <identifier> ':' {field=Pattern} <regexp> '\n'+`,
+		getGoppASTRules(ByHandGoppAST)[1],
 	},
 	{
 		"Rule",
 		`Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+`,
-		ByHandGoppAST[3].([]Node)[1],
+		getGoppASTRules(ByHandGoppAST)[2],
 	},
 	{
 		"Symbol",
 		`Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+`,
-		ByHandGoppAST[3].([]Node)[2],
+		getGoppASTRules(ByHandGoppAST)[3],
 	},
 	{
 		"Expr",
 		`Expr => <<Term>>+`,
-		ByHandGoppAST[3].([]Node)[3],
+		getGoppASTRules(ByHandGoppAST)[4],
 	},
 	{
 		"Term.1",
 		`Term => <Term1>`,
-		ByHandGoppAST[3].([]Node)[4],
+		getGoppASTRules(ByHandGoppAST)[5],
 	},
 	{
 		"Term.2",
 		`Term => <Term2>`,
-		ByHandGoppAST[3].([]Node)[5],
+		getGoppASTRules(ByHandGoppAST)[6],
 	},
 	{
 		"Term1.1",
 		`Term1 => {type=RepeatZeroTerm} {field=Term} <<Term2>> '*'`,
-		ByHandGoppAST[3].([]Node)[6],
+		getGoppASTRules(ByHandGoppAST)[7],
 	},
 	{
 		"Term1.2",
 		`Term1 => {type=RepeatOneTerm} {field=Term} <<Term2>> '+'`,
-		ByHandGoppAST[3].([]Node)[7],
+		getGoppASTRules(ByHandGoppAST)[8],
 	},
 	{
 		"Term2.1",
 		`Term2 => {type=OptionalTerm} '[' {field=Expr} <Expr> ']'`,
-		ByHandGoppAST[3].([]Node)[8],
+		getGoppASTRules(ByHandGoppAST)[9],
 	},
 	{
 		"Term2.2",
 		`Term2 => {type=GroupTerm} '(' {field=Expr} <Expr> ')'`,
-		ByHandGoppAST[3].([]Node)[9],
+		getGoppASTRules(ByHandGoppAST)[10],
 	},
 	{
 		"Term2.3",
 		`Term2 => {type=RuleTerm} '<<' {field=Name} <identifier> '>>'`,
-		ByHandGoppAST[3].([]Node)[10],
+		getGoppASTRules(ByHandGoppAST)[11],
 	},
 	{
 		"Term2.4",
 		`Term2 => {type=InlineRuleTerm} '<' {field=Name} <identifier> '>'`,
-		ByHandGoppAST[3].([]Node)[11],
+		getGoppASTRules(ByHandGoppAST)[12],
 	},
 	{
 		"Term2.5",
 		`Term2 => {type=TagTerm} {field=Tag} <tag>`,
-		ByHandGoppAST[3].([]Node)[12],
+		getGoppASTRules(ByHandGoppAST)[13],
 	},
 	{
 		"Term2.6",
 		`Term2 => {type=LiteralTerm} {field=Literal} <literal>`,
-		ByHandGoppAST[3].([]Node)[13],
+		getGoppASTRules(ByHandGoppAST)[14],
 	},
 }
 
@@ -277,6 +286,7 @@ func TestParseRulesIndividual(t *testing.T) {
 	for _, th := range rulesTextAndByHand {
 		rule := th.ByHand
 		byHandAST := mkGrammar(
+			[]Node{},
 			[]Node{rule},
 			[]Node{},
 		)
@@ -350,9 +360,9 @@ func TestParseFullGrammar(t *testing.T) {
 		t.Errorf("leftover tokens: %v.", remaining)
 	}
 
-	if false {
+	if true {
 		dig := func(top AST) interface{} {
-			return top[2].([]Node)[1].([]Node)[4].([]Node)[4]
+			return top[5]
 		}
 		byhand := dig(ByHandGoppAST)
 		gen := dig(AST(items))
@@ -374,6 +384,7 @@ func TestParseFullGrammar(t *testing.T) {
 
 func TestParseEasyGrammar(t *testing.T) {
 	byHandAST := mkGrammar(
+		[]Node{},
 		[]Node{
 			mkRule("X",
 				mkLiteralTerm("y"),
@@ -421,6 +432,7 @@ w = /z/
 
 func TestParseMultiRule(t *testing.T) {
 	byHandAST := mkGrammar(
+		[]Node{},
 		[]Node{
 			mkRule("X",
 				mkOptionalTerm(
@@ -465,7 +477,7 @@ w = /z/
 
 	if false {
 		dig := func(top AST) interface{} {
-			return top[2].([]Node)[0].([]Node)[4].([]Node)[0] //.([]Node)[3]
+			return top[2]
 		}
 		fmt.Println("byhand")
 		printNode(dig(byHandAST), 0)

@@ -1,4 +1,6 @@
-Grammar => {type=Grammar} '\n'* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+Grammar => {type=Grammar} '\n'* {field=LexSteps} <<LexStep>>* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
+
+LexStep => {field=Name} <identifier> ':' {field=Pattern} <regexp> '\n'+
 
 Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
 
