@@ -91,3 +91,43 @@ func TestMath(t *testing.T) {
 		t.Errorf("Expected %q, got %q.", expectedEqn, eqn)
 	}
 }
+
+func TestMathPrecedence(t *testing.T) {
+	df, err := gopp.NewDecoderFactory(mathgopp, "Eqn")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	df.RegisterType(MathExprFactor{})
+	df.RegisterType(MathNumberFactor{})
+	df.RegisterType(MathSum{})
+	df.RegisterType(MathProduct{})
+	dec := df.NewDecoder(strings.NewReader("5+5*2=6*2+3\n"))
+	var eqn MathEqn
+	err = dec.Decode(&eqn)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	expectedEqn := MathEqn{
+		Left: MathSum{
+			MathNumberFactor{"5"},
+			MathProduct{
+				MathNumberFactor{"5"},
+				MathNumberFactor{"2"},
+			},
+		},
+		Right: MathSum{
+			MathProduct{
+				MathNumberFactor{"6"},
+				MathNumberFactor{"2"},
+			},
+			MathNumberFactor{"3"},
+		},
+	}
+
+	if eqn != expectedEqn {
+		t.Errorf("Expected %q, got %q.", expectedEqn, eqn)
+	}
+}
