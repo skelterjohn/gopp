@@ -12,7 +12,15 @@ func Parse(g Grammar, startRule string, document []byte) (ast AST, err error) {
 	if err != nil {
 		return
 	}
-	tokens, err := Tokenize(tokenREs, document)
+	ignoreREs, err := g.IgnoreREs()
+	if err != nil {
+		return
+	}
+	ti := TokenizeInfo{
+		TokenREs:  tokenREs,
+		IgnoreREs: ignoreREs,
+	}
+	tokens, err := Tokenize(ti, document)
 	if err != nil {
 		return
 	}

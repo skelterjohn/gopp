@@ -55,7 +55,7 @@ var symbolFailTests = map[string][]string{
 func TestSymbolTokenize(t *testing.T) {
 	for typ, examples := range symbolTests {
 		for _, example := range examples {
-			tokens, err := Tokenize(ByHandGrammarREs, []byte(example[0]))
+			tokens, err := Tokenize(TokenizeInfo{TokenREs: ByHandGrammarREs}, []byte(example[0]))
 			if err != nil {
 				t.Error(err)
 				continue
@@ -79,7 +79,7 @@ func TestSymbolTokenize(t *testing.T) {
 func TestSymbolFailTokenize(t *testing.T) {
 	for typ, examples := range symbolFailTests {
 		for _, example := range examples {
-			tokens, err := Tokenize(ByHandGrammarREs, []byte(example))
+			tokens, err := Tokenize(TokenizeInfo{TokenREs: ByHandGrammarREs}, []byte(example))
 			if err != nil {
 				continue
 			}
@@ -94,6 +94,8 @@ func TestSymbolFailTokenize(t *testing.T) {
 }
 
 var goppgopp = `
+ignore: /^#.*\n/
+ignore: /^(?:[ \t])+/
 Grammar => {type=Grammar} '\n'* {field=LexSteps} <<LexStep>>* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 LexStep => {field=Name} <identifier> ':' {field=Pattern} <regexp> '\n'+
 Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+

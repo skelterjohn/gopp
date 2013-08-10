@@ -2,6 +2,7 @@ package gopp
 
 import (
 	"fmt"
+	"regexp"
 )
 
 type Token struct {
@@ -14,10 +15,33 @@ func (t Token) String() string {
 	return fmt.Sprintf("(%s: %q)", t.Type, t.Text)
 }
 
-func Tokenize(res []TypedRegexp, document []byte) (tokens []Token, err error) {
+type TokenizeInfo struct {
+	TokenREs  []TypedRegexp
+	IgnoreREs []*regexp.Regexp
+}
+
+func Tokenize(ti TokenizeInfo, document []byte) (tokens []Token, err error) {
+tokenloop:
 	for len(document) != 0 {
+
+		snippet := document
+		if len(snippet) > 20 {
+			snippet = snippet[:20]
+		}
+
+		// If something to ignore, trim it off.
+		for _, re := range ti.IgnoreREs {
+			matches := re.FindSubmatch(document)
+			if len(matches) == 0 {
+				continue
+			}
+			document = document[len(matches[0]):]
+			continue tokenloop
+		}
+
 		var newdocument []byte
-		for _, re := range res {
+		for _, re := range ti.TokenREs {
+
 			matches := re.FindSubmatch(document)
 			if len(matches) == 0 {
 				continue

@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-const REGEXP_PREFIX = `^(?: )*`
-
 type Grammar struct {
 	LexSteps []LexStep
 	Rules    []Rule
@@ -57,7 +55,7 @@ func (g Grammar) TokenREs() (res []TypedRegexp, err error) {
 	}
 	sort.Sort(sortedLiterals)
 	for _, literal := range sortedLiterals {
-		re, err := regexp.Compile(REGEXP_PREFIX + "(" + regexp.QuoteMeta(literal) + ")")
+		re, err := regexp.Compile("^(" + regexp.QuoteMeta(literal) + ")")
 		if err != nil {
 			panic("regexp.QuoteMeta returned something that didn't compile")
 		}
@@ -65,11 +63,25 @@ func (g Grammar) TokenREs() (res []TypedRegexp, err error) {
 	}
 	for _, symbol := range g.Symbols {
 		var re *regexp.Regexp
-		re, err = regexp.Compile(REGEXP_PREFIX + symbol.Pattern)
+		re, err = regexp.Compile("^" + symbol.Pattern)
 		if err != nil {
 			return
 		}
 		res = append(res, TypedRegexp{symbol.Name, re})
+	}
+	return
+}
+
+func (g Grammar) IgnoreREs() (res []*regexp.Regexp, err error) {
+	for _, ls := range g.LexSteps {
+		if ls.Name == "ignore" {
+			var re *regexp.Regexp
+			re, err = regexp.Compile(ls.Pattern)
+			if err != nil {
+				return
+			}
+			res = append(res, re)
+		}
 	}
 	return
 }

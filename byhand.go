@@ -1,6 +1,16 @@
 package gopp
 
 var ByHandGrammar = Grammar{
+	LexSteps: []LexStep{
+		LexStep{
+			Name:    "ignore",
+			Pattern: `^#.*\n`,
+		},
+		LexStep{
+			Name:    "ignore",
+			Pattern: `^(?:[ \t])+`,
+		},
+	},
 	Rules: []Rule{
 		Rule{ // Grammar => {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 			Name: "Grammar",
@@ -328,7 +338,10 @@ func mkLiteralTerm(text string) []Node {
 }
 
 var ByHandGoppAST = mkGrammar(
-	[]Node{},
+	[]Node{
+		mkLexStep("ignore", `^#.*\n`),
+		mkLexStep("ignore", `^(?:[ \t])+`),
+	},
 	[]Node{
 		mkRule("Grammar",
 			mkTagTerm("type=Grammar"),

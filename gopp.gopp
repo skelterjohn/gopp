@@ -1,9 +1,10 @@
+ignore: /^#.*\n/
+ignore: /^(?:[ \t])+/
+
 Grammar => {type=Grammar} '\n'* {field=LexSteps} <<LexStep>>* {field=Rules} <<Rule>>+ {field=Symbols} <<Symbol>>*
 
 LexStep => {field=Name} <identifier> ':' {field=Pattern} <regexp> '\n'+
-
 Rule => {field=Name} <identifier> '=>' {field=Expr} <Expr> '\n'+
-
 Symbol => {field=Name} <identifier> '=' {field=Pattern} <regexp> '\n'+
 
 Expr => <<Term>>+
@@ -21,9 +22,6 @@ Term2 => {type=TagTerm} {field=Tag} <tag>
 Term2 => {type=LiteralTerm} {field=Literal} <literal>
 
 identifier = /([a-zA-Z][a-zA-Z0-9_]*)/
-
 literal = /'((?:[\\']|[^'])+?)'/
-
 tag = /\{((?:[\\']|[^'])+?)\}/
-
 regexp = /\/((?:\\/|[^\n])+?)\//

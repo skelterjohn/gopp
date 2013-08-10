@@ -3,6 +3,7 @@ package gopp
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -150,12 +151,22 @@ func compareTerms(t1, t2 Term) (err error) {
 }
 
 var ByHandGrammarREs []TypedRegexp
+var ByHandGrammarIgnoreREs []*regexp.Regexp
+var ByHandTokenInfo TokenizeInfo
 
 func init() {
 	var err error
 	ByHandGrammarREs, err = ByHandGrammar.TokenREs()
 	if err != nil {
 		panic(err)
+	}
+	ByHandGrammarIgnoreREs, err = ByHandGrammar.IgnoreREs()
+	if err != nil {
+		panic(err)
+	}
+	ByHandTokenInfo = TokenizeInfo{
+		TokenREs:  ByHandGrammarREs,
+		IgnoreREs: ByHandGrammarIgnoreREs,
 	}
 }
 
@@ -292,7 +303,7 @@ func TestParseRulesIndividual(t *testing.T) {
 		)
 
 		txt := fmt.Sprintf("\n%s\n", th.Text)
-		tokens, err := Tokenize(ByHandGrammarREs, []byte(txt))
+		tokens, err := Tokenize(ByHandTokenInfo, []byte(txt))
 		if err != nil {
 			t.Errorf("%s: %s", th.Name, err)
 			return
@@ -338,7 +349,7 @@ func TestParseRulesIndividual(t *testing.T) {
 }
 
 func TestParseFullGrammar(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, []byte(goppgopp))
+	tokens, err := Tokenize(ByHandTokenInfo, []byte(goppgopp))
 	if err != nil {
 		t.Error(err)
 		return
@@ -362,7 +373,7 @@ func TestParseFullGrammar(t *testing.T) {
 
 	if true {
 		dig := func(top AST) interface{} {
-			return top[5]
+			return top[3]
 		}
 		byhand := dig(ByHandGoppAST)
 		gen := dig(AST(items))
@@ -395,7 +406,7 @@ func TestParseEasyGrammar(t *testing.T) {
 		},
 	)
 
-	tokens, err := Tokenize(ByHandGrammarREs, []byte(`
+	tokens, err := Tokenize(ByHandTokenInfo, []byte(`
 X => 'y'
 w = /z/
 `))
@@ -450,7 +461,7 @@ func TestParseMultiRule(t *testing.T) {
 		},
 	)
 
-	tokens, err := Tokenize(ByHandGrammarREs, []byte(`
+	tokens, err := Tokenize(ByHandTokenInfo, []byte(`
 X => ['y']
 Z => <<X>>+
 w = /z/
@@ -487,7 +498,7 @@ w = /z/
 }
 
 func TestParseSymbol(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, []byte("'junkinthetrunk' stuff"))
+	tokens, err := Tokenize(ByHandTokenInfo, []byte("'junkinthetrunk' stuff"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -515,7 +526,7 @@ func TestParseSymbol(t *testing.T) {
 }
 
 func TestParseTag(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, []byte("=> stuff"))
+	tokens, err := Tokenize(ByHandTokenInfo, []byte("=> stuff"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -543,7 +554,7 @@ func TestParseTag(t *testing.T) {
 }
 
 func TestParseLiteral(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, []byte("=> stuff"))
+	tokens, err := Tokenize(ByHandTokenInfo, []byte("=> stuff"))
 	if err != nil {
 		t.Error(err)
 		return
