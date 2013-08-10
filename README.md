@@ -113,6 +113,8 @@ MathEqn{
 }
 ```
 
+Clearly, the object is a more reasonable representation than the AST for actually dealing with in your code, which is why the decoding step was created.
+
 Grammar
 -------
 
