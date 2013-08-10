@@ -2,7 +2,6 @@ package gopp
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -55,7 +54,7 @@ var symbolFailTests = map[string][]string{
 func TestSymbolTokenize(t *testing.T) {
 	for typ, examples := range symbolTests {
 		for _, example := range examples {
-			tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(example[0]))
+			tokens, err := Tokenize(ByHandGrammarREs, []byte(example[0]))
 			if err != nil {
 				t.Error(err)
 				continue
@@ -79,7 +78,7 @@ func TestSymbolTokenize(t *testing.T) {
 func TestSymbolFailTokenize(t *testing.T) {
 	for typ, examples := range symbolFailTests {
 		for _, example := range examples {
-			tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(example))
+			tokens, err := Tokenize(ByHandGrammarREs, []byte(example))
 			if err != nil {
 				continue
 			}
@@ -121,8 +120,7 @@ func xTestTokenREs(t *testing.T) {
 	}
 
 	counter := 0
-	r := strings.NewReader(goppgopp)
-	tokens, err := Tokenize(res, r)
+	tokens, err := Tokenize(res, []byte(goppgopp))
 	if err != nil {
 		t.Error(err)
 	}

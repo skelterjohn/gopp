@@ -70,7 +70,7 @@ func TestMath(t *testing.T) {
 	df.RegisterType(MathNumberFactor{})
 	df.RegisterType(MathSum{})
 	df.RegisterType(MathProduct{})
-	dec := df.NewDecoder(strings.NewReader("5+1=6"))
+	dec := df.NewDecoder(strings.NewReader("5+1=6\n"))
 	var eqn MathEqn
 	err = dec.Decode(&eqn)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/skelterjohn/debugtags"
 	"io"
+	"io/ioutil"
 	"reflect"
 	"strings"
 )
@@ -20,7 +21,7 @@ func NewDecoderFactory(gopp string, start string) (df *DecoderFactory, err error
 		start: start,
 		types: map[string]reflect.Type{},
 	}
-	ast, err := Parse(ByHandGrammar, "Grammar", strings.NewReader(gopp))
+	ast, err := Parse(ByHandGrammar, "Grammar", []byte(gopp))
 	if err != nil {
 		return
 	}
@@ -59,7 +60,11 @@ type Decoder struct {
 }
 
 func (d *Decoder) Decode(obj interface{}) (err error) {
-	ast, err := Parse(d.g, d.start, d.Reader)
+	document, err := ioutil.ReadAll(d.Reader)
+	if err != nil {
+		return
+	}
+	ast, err := Parse(d.g, d.start, document)
 	if err != nil {
 		return
 	}

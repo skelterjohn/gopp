@@ -4,16 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/skelterjohn/debugtags"
-	"io"
 	"strconv"
 )
 
-func Parse(g Grammar, startRule string, r io.Reader) (ast AST, err error) {
+func Parse(g Grammar, startRule string, document []byte) (ast AST, err error) {
 	tokenREs, err := g.TokenREs()
 	if err != nil {
 		return
 	}
-	tokens, err := Tokenize(tokenREs, r)
+	tokens, err := Tokenize(tokenREs, document)
 	if err != nil {
 		return
 	}
@@ -40,6 +39,10 @@ func Parse(g Grammar, startRule string, r io.Reader) (ast AST, err error) {
 }
 
 const debug = false
+
+func SetTr(e bool) {
+	tr.Enabled = e
+}
 
 var tr = debugtags.Tracer{Enabled: false}
 

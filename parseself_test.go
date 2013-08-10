@@ -52,7 +52,7 @@ func TestFixedPointDecoder(t *testing.T) {
 
 func TestDecodeGrammar(t *testing.T) {
 	var g Grammar
-	ast, err := Parse(ByHandGrammar, "Grammar", strings.NewReader(goppgopp))
+	ast, err := Parse(ByHandGrammar, "Grammar", []byte(goppgopp))
 	if err != nil {
 		t.Error(err)
 	}
@@ -282,7 +282,7 @@ func TestParseRulesIndividual(t *testing.T) {
 		)
 
 		txt := fmt.Sprintf("\n%s\n", th.Text)
-		tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(txt))
+		tokens, err := Tokenize(ByHandGrammarREs, []byte(txt))
 		if err != nil {
 			t.Errorf("%s: %s", th.Name, err)
 			return
@@ -328,7 +328,7 @@ func TestParseRulesIndividual(t *testing.T) {
 }
 
 func TestParseFullGrammar(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(goppgopp))
+	tokens, err := Tokenize(ByHandGrammarREs, []byte(goppgopp))
 	if err != nil {
 		t.Error(err)
 		return
@@ -384,7 +384,7 @@ func TestParseEasyGrammar(t *testing.T) {
 		},
 	)
 
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`
+	tokens, err := Tokenize(ByHandGrammarREs, []byte(`
 X => 'y'
 w = /z/
 `))
@@ -438,7 +438,7 @@ func TestParseMultiRule(t *testing.T) {
 		},
 	)
 
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader(`
+	tokens, err := Tokenize(ByHandGrammarREs, []byte(`
 X => ['y']
 Z => <<X>>+
 w = /z/
@@ -475,7 +475,7 @@ w = /z/
 }
 
 func TestParseSymbol(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("'junkinthetrunk' stuff"))
+	tokens, err := Tokenize(ByHandGrammarREs, []byte("'junkinthetrunk' stuff"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -503,7 +503,7 @@ func TestParseSymbol(t *testing.T) {
 }
 
 func TestParseTag(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("=> stuff"))
+	tokens, err := Tokenize(ByHandGrammarREs, []byte("=> stuff"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -531,7 +531,7 @@ func TestParseTag(t *testing.T) {
 }
 
 func TestParseLiteral(t *testing.T) {
-	tokens, err := Tokenize(ByHandGrammarREs, strings.NewReader("=> stuff"))
+	tokens, err := Tokenize(ByHandGrammarREs, []byte("=> stuff"))
 	if err != nil {
 		t.Error(err)
 		return

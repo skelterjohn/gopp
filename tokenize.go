@@ -1,10 +1,7 @@
 package gopp
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"io"
 )
 
 type Token struct {
@@ -17,28 +14,11 @@ func (t Token) String() string {
 	return fmt.Sprintf("(%s: %q)", t.Type, t.Text)
 }
 
-func Tokenize(res []TypedRegexp, r io.Reader) (tokens []Token, err error) {
-
-	scanner := bufio.NewScanner(r)
-	var buf bytes.Buffer
-	// true if the last iteration through the loop did not result in a match (more data needed)
-	noMatch := true
-	eof := false
-	for {
-		if noMatch {
-			if scanner.Scan() {
-				// TODO: panic? error?
-				// add a chunk
-				buf.Write(scanner.Bytes())
-				buf.WriteString("\n")
-			} else {
-				eof = true
-			}
-		}
-		noMatch = true
-		// try to match one of our regexps to the current buffer
+func Tokenize(res []TypedRegexp, document []byte) (tokens []Token, err error) {
+	for len(document) != 0 {
+		var newdocument []byte
 		for _, re := range res {
-			matches := re.FindSubmatch(buf.Bytes())
+			matches := re.FindSubmatch(document)
 			if len(matches) == 0 {
 				continue
 			}
@@ -53,21 +33,19 @@ func Tokenize(res []TypedRegexp, r io.Reader) (tokens []Token, err error) {
 					return
 				}
 			}
-			buf.Read(matches[0])
+			newdocument = document[len(matches[0]):]
 			tokens = append(tokens, token)
-			noMatch = false
 			break
 		}
-
-		if noMatch && eof {
-			if buf.Len() != 0 {
-				err = fmt.Errorf("Could not match %q.", buf.String())
+		if newdocument == nil {
+			snippet := document
+			if len(snippet) > 80 {
+				snippet = snippet[:80]
 			}
-			break
+			err = fmt.Errorf("Could not match starting from %q.", snippet)
+			return
 		}
-		if eof && buf.Len() == 0 {
-			break
-		}
+		document = newdocument
 	}
 	return
 }
