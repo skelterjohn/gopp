@@ -1,16 +1,16 @@
 package gopp
 
 import (
-	"reflect"
-	"fmt"
 	"errors"
-	"strings"
+	"fmt"
 	"github.com/skelterjohn/debugtags"
 	"io"
+	"reflect"
+	"strings"
 )
 
 type DecoderFactory struct {
-	g Grammar
+	g     Grammar
 	start string
 	types map[string]reflect.Type
 }
@@ -48,7 +48,7 @@ func (df *DecoderFactory) RegisterType(x interface{}) {
 func (df *DecoderFactory) NewDecoder(r io.Reader) (d Decoder) {
 	d = Decoder{
 		DecoderFactory: df,
-		Reader: r,
+		Reader:         r,
 	}
 	return
 }
@@ -84,13 +84,13 @@ func getTagValue(typ string, t Tag) (value string, ok bool) {
 var _ = fmt.Println
 
 type StructuredAST struct {
-	ast AST
+	ast   AST
 	types map[string]reflect.Type
 }
 
 func NewStructuredAST(ast AST) (sa StructuredAST) {
 	sa = StructuredAST{
-		ast: ast,
+		ast:   ast,
 		types: map[string]reflect.Type{},
 	}
 	return
@@ -219,7 +219,7 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 		}
 		ds, derr := descapeString(st.Text)
 		if derr == nil {
-			v.SetString(ds)	
+			v.SetString(ds)
 		} else {
 			v.SetString(st.Text)
 		}

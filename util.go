@@ -27,7 +27,7 @@ func (l literalSorter) Less(i, j int) bool {
 
 func escapeString(s string) (r string) {
 	r = strconv.Quote(s)
-	r = r[1:len(r)-1]
+	r = r[1 : len(r)-1]
 	return
 }
 
