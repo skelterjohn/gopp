@@ -315,7 +315,7 @@ func TestParseRulesIndividual(t *testing.T) {
 		start := ByHandGrammar.RulesForName("Grammar")[0]
 		// tr.Enabled = true
 		pd := &ParseData{}
-		items, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
+		items, remaining, err := start.Parse(ByHandGrammar, tokens, pd, []string{})
 		// tr.Enabled = false
 		if err != nil {
 			fmt.Printf("Remaining: %v\n", pd.TokensForError)
@@ -361,7 +361,7 @@ func TestParseFullGrammar(t *testing.T) {
 	start := ByHandGrammar.RulesForName("Grammar")[0]
 	// tr.Enabled = true
 	pd := &ParseData{}
-	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
+	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd, []string{})
 	// tr.Enabled = false
 	if err != nil {
 		fmt.Printf("Remaining: %v\n", pd.TokensForError)
@@ -420,7 +420,7 @@ w = /z/
 	}
 	start := ByHandGrammar.RulesForName("Grammar")[0]
 	pd := &ParseData{}
-	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
+	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd, []string{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -476,7 +476,7 @@ w = /z/
 	}
 	start := ByHandGrammar.RulesForName("Grammar")[0]
 	pd := &ParseData{}
-	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd)
+	items, remaining, err := start.Parse(ByHandGrammar, tokens, pd, []string{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -509,7 +509,7 @@ func TestParseSymbol(t *testing.T) {
 	}
 	term := InlineRuleTerm{Name: "literal"}
 	pd := &ParseData{}
-	items, _, err := term.Parse(ByHandGrammar, tokens, pd)
+	items, _, err := term.Parse(ByHandGrammar, tokens, pd, []string{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -537,7 +537,7 @@ func TestParseTag(t *testing.T) {
 	}
 	term := TagTerm{Tag: "hello"}
 	pd := &ParseData{}
-	items, remaining, err := term.Parse(ByHandGrammar, tokens, pd)
+	items, remaining, err := term.Parse(ByHandGrammar, tokens, pd, []string{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -565,7 +565,7 @@ func TestParseLiteral(t *testing.T) {
 	}
 	term := LiteralTerm{Literal: "=>"}
 	pd := &ParseData{}
-	items, remaining, err := term.Parse(ByHandGrammar, tokens, pd)
+	items, remaining, err := term.Parse(ByHandGrammar, tokens, pd, []string{})
 	if err != nil {
 		t.Error(err)
 		return

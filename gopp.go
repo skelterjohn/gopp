@@ -120,7 +120,7 @@ func (e Expr) CollectLiterals(literals map[string]bool) {
 
 type Term interface {
 	CollectLiterals(literals map[string]bool)
-	Parse(g Grammar, tokens []Token, pd *ParseData) (items []Node, remainingTokens []Token, err error)
+	Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error)
 }
 
 type RepeatZeroTerm struct {
