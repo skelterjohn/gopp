@@ -219,42 +219,35 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 
 	// symbols, literals, and tags go into strings
 	case reflect.String:
-		switch nn := node.(type) {
-		case SymbolText:
-			ds, derr := descapeString(nn.Text)
-			if derr == nil {
-				v.SetString(ds)
-			} else {
-				v.SetString(nn.Text)
-			}
-		case Tag:
-			v.SetString(string(nn))
-		case Literal:
-			v.SetString(string(nn))
-		default:
-			err = errors.New("Trying to store invalid type into string type.")
+		s := ""
+		if s, err = getString(node); err == nil {
+			v.SetString(s)
+		} else {
+			err = errors.New("Trying to store invalid type into string field.")
 		}
 
-	// tags go into ints
+	// and into ints
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		if tag, ok := node.(Tag); ok {
+		s := ""
+		if s, err = getString(node); err == nil {
 			var x int64
-			if x, err = strconv.ParseInt(string(tag), 0, 64); err == nil {
+			if x, err = strconv.ParseInt(string(s), 0, 64); err == nil {
 				v.SetInt(x)
 			}
 		} else {
-			err = errors.New("Trying to store non-tag into integer field.")
+			err = errors.New("Trying to store invalid type into integer field.")
 		}
 
-	// tags also go into uints
+	// and also into uints
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		if tag, ok := node.(Tag); ok {
+		s := ""
+		if s, err = getString(node); err == nil {
 			var x uint64
-			if x, err = strconv.ParseUint(string(tag), 0, 64); err == nil {
+			if x, err = strconv.ParseUint(string(s), 0, 64); err == nil {
 				v.SetUint(x)
 			}
 		} else {
-			err = errors.New("Trying to store non-tag into unsigned integer field.")
+			err = errors.New("Trying to store invalid type into unsigned integer field.")
 		}
 
 	default:
@@ -294,6 +287,24 @@ func getField(v reflect.Value, field string) (fv reflect.Value, err error) {
 		fv = v
 	} else {
 		fv = v.FieldByName(field)
+	}
+	return
+}
+
+func getString(node Node) (s string, err error) {
+	switch nn := node.(type) {
+	case SymbolText:
+		s = nn.Text
+	case Tag:
+		s = string(nn)
+	case Literal:
+		s = string(nn)
+	default:
+		return "", fmt.Errorf("Expected symbol, tag, or literal, but got %T", node)
+	}
+	ds, derr := descapeString(s)
+	if derr == nil {
+		s = ds
 	}
 	return
 }
