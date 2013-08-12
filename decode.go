@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -136,7 +137,8 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 	}
 
 	// populate struct fields
-	if typ.Kind() == reflect.Struct {
+	switch typ.Kind() {
+	case reflect.Struct:
 		// we've got a struct pointer - iterate through node looking for field= tags
 		nodes, ok := node.([]Node)
 		if !ok {
@@ -177,11 +179,9 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 				}
 			}
 		}
-		return
-	}
 
 	// map things into slices
-	if typ.Kind() == reflect.Slice {
+	case reflect.Slice:
 		//fmt.Printf("Going into %s is\n", typ.Elem().Name())
 		//printNode(node, 0)
 		isInterfaceSlice := typ.Elem().Kind() == reflect.Interface
@@ -216,11 +216,9 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 			// this is how append looks w/ reflect
 			v.Set(reflect.Append(v, ev))
 		}
-		return
-	}
 
-	// symbols and tags go into strings
-	if typ.Kind() == reflect.String {
+	// symbols, literals, and tags go into strings
+	case reflect.String:
 		switch nn := node.(type) {
 		case SymbolText:
 			ds, derr := descapeString(nn.Text)
@@ -231,14 +229,38 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 			}
 		case Tag:
 			v.SetString(string(nn))
+		case Literal:
+			v.SetString(string(nn))
 		default:
 			err = errors.New("Trying to store invalid type into string type.")
-			return
 		}
-		return
+
+	// tags go into ints
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if tag, ok := node.(Tag); ok {
+			var x int64
+			if x, err = strconv.ParseInt(string(tag), 0, 64); err == nil {
+				v.SetInt(x)
+			}
+		} else {
+			err = errors.New("Trying to store non-tag into integer field.")
+		}
+
+	// tags also go into uints
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		if tag, ok := node.(Tag); ok {
+			var x uint64
+			if x, err = strconv.ParseUint(string(tag), 0, 64); err == nil {
+				v.SetUint(x)
+			}
+		} else {
+			err = errors.New("Trying to store non-tag into unsigned integer field.")
+		}
+
+	default:
+		err = fmt.Errorf("Unanticipated type: %s.", typ.Name())
 	}
 
-	err = fmt.Errorf("Unanticipated type: %s.", typ.Name())
 	return
 }
 
