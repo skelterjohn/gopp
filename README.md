@@ -107,7 +107,7 @@ and the object
 MathEqn{
 	Left:MathSum{
 		First:MathNumberFactor{"5"},
-		Second:MathNumberFactor{"5"},
+		Second:MathNumberFactor{"1"},
 	},
 	Right: MathNumberFactor{"6"},
 }
