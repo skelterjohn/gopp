@@ -136,8 +136,8 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 		typ = typ.Elem()
 	}
 
-	// populate struct fields
 	switch typ.Kind() {
+	// populate struct fields
 	case reflect.Struct:
 		// we've got a struct pointer - iterate through node looking for field= tags
 		nodes, ok := node.([]Node)
