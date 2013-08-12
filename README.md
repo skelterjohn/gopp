@@ -121,7 +121,7 @@ Grammar
 The following .gopp grammar describes .gopp grammars, and how to decode them into gopp.Grammar objects.
 
 ```
-# The first things are lex steps, which are for use by the tokenizer. 
+# The first things are lex steps, which are for use by the tokenizer.
 # Currently the only recognized lex step is stuff to ignore.
 
 # We ignore comments,
