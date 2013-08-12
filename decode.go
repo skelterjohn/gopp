@@ -220,35 +220,37 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 	// symbols, literals, and tags go into strings
 	case reflect.String:
 		s := ""
-		if s, err = getString(node); err == nil {
-			v.SetString(s)
-		} else {
+		if s, err = getString(node); err != nil {
 			err = errors.New("Trying to store invalid type into string field.")
+			return
 		}
+		v.SetString(s)
 
 	// and into ints
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		s := ""
-		if s, err = getString(node); err == nil {
-			var x int64
-			if x, err = strconv.ParseInt(string(s), 0, 64); err == nil {
-				v.SetInt(x)
-			}
-		} else {
+		if s, err = getString(node); err != nil {
 			err = errors.New("Trying to store invalid type into integer field.")
+			return
 		}
+		var x int64
+		if x, err = strconv.ParseInt(string(s), 0, 64); err != nil {
+			return
+		}
+		v.SetInt(x)
 
 	// and also into uints
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		s := ""
-		if s, err = getString(node); err == nil {
-			var x uint64
-			if x, err = strconv.ParseUint(string(s), 0, 64); err == nil {
-				v.SetUint(x)
-			}
-		} else {
+		if s, err = getString(node); err != nil {
 			err = errors.New("Trying to store invalid type into unsigned integer field.")
+			return
 		}
+		var x uint64
+		if x, err = strconv.ParseUint(string(s), 0, 64); err != nil {
+			return
+		}
+		v.SetUint(x)
 
 	default:
 		err = fmt.Errorf("Unanticipated type: %s.", typ.Name())
