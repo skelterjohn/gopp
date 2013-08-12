@@ -219,18 +219,21 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 		return
 	}
 
-	// symbols go into strings
+	// symbols and tags go into strings
 	if typ.Kind() == reflect.String {
-		st, isSymbol := node.(SymbolText)
-		if !isSymbol {
-			err = errors.New("Trying to store non-symbol into string type.")
+		switch nn := node.(type) {
+		case SymbolText:
+			ds, derr := descapeString(nn.Text)
+			if derr == nil {
+				v.SetString(ds)
+			} else {
+				v.SetString(nn.Text)
+			}
+		case Tag:
+			v.SetString(string(nn))
+		default:
+			err = errors.New("Trying to store invalid type into string type.")
 			return
-		}
-		ds, derr := descapeString(st.Text)
-		if derr == nil {
-			v.SetString(ds)
-		} else {
-			v.SetString(st.Text)
 		}
 		return
 	}
