@@ -41,7 +41,7 @@ type MathEqn struct {
 }
 
 func (e MathEqn) String() string {
-	return fmt.Sprintf("%s=%s", e.Left, e.Right)
+	return fmt.Sprintf("%d=%d", e.Left, e.Right)
 }
 
 type MathSum struct {
@@ -49,7 +49,7 @@ type MathSum struct {
 }
 
 func (s MathSum) String() string {
-	return fmt.Sprintf("%s+%s", s.First, s.Second)
+	return fmt.Sprintf("%d+%d", s.First, s.Second)
 }
 
 type MathProduct struct {
@@ -57,7 +57,7 @@ type MathProduct struct {
 }
 
 func (p MathProduct) String() string {
-	return fmt.Sprintf("%s*%s", p.First, p.Second)
+	return fmt.Sprintf("%d*%d", p.First, p.Second)
 }
 
 type MathExprFactor struct {
@@ -65,15 +65,15 @@ type MathExprFactor struct {
 }
 
 func (ef MathExprFactor) String() string {
-	return fmt.Sprintf("(%s)", ef.Expr)
+	return fmt.Sprintf("(%d)", ef.Expr)
 }
 
 type MathNumberFactor struct {
-	Number string
+	Number int
 }
 
 func (nf MathNumberFactor) String() string {
-	return nf.Number
+	return fmt.Sprint(nf.Number)
 }
 
 func TestMath(t *testing.T) {
@@ -96,10 +96,10 @@ func TestMath(t *testing.T) {
 
 	expectedEqn := MathEqn{
 		Left: MathSum{
-			First:  MathNumberFactor{"5"},
-			Second: MathNumberFactor{"1"},
+			First:  MathNumberFactor{5},
+			Second: MathNumberFactor{1},
 		},
-		Right: MathNumberFactor{"6"},
+		Right: MathNumberFactor{6},
 	}
 
 	if eqn != expectedEqn {
@@ -127,18 +127,18 @@ func TestMathPrecedence(t *testing.T) {
 
 	expectedEqn := MathEqn{
 		Left: MathSum{
-			MathNumberFactor{"5"},
+			MathNumberFactor{5},
 			MathProduct{
-				MathNumberFactor{"5"},
-				MathNumberFactor{"2"},
+				MathNumberFactor{5},
+				MathNumberFactor{2},
 			},
 		},
 		Right: MathSum{
 			MathProduct{
-				MathNumberFactor{"6"},
-				MathNumberFactor{"2"},
+				MathNumberFactor{6},
+				MathNumberFactor{2},
 			},
-			MathNumberFactor{"3"},
+			MathNumberFactor{3},
 		},
 	}
 

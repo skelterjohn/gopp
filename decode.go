@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -135,8 +136,9 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 		typ = typ.Elem()
 	}
 
+	switch typ.Kind() {
 	// populate struct fields
-	if typ.Kind() == reflect.Struct {
+	case reflect.Struct:
 		// we've got a struct pointer - iterate through node looking for field= tags
 		nodes, ok := node.([]Node)
 		if !ok {
@@ -177,11 +179,9 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 				}
 			}
 		}
-		return
-	}
 
 	// map things into slices
-	if typ.Kind() == reflect.Slice {
+	case reflect.Slice:
 		//fmt.Printf("Going into %s is\n", typ.Elem().Name())
 		//printNode(node, 0)
 		isInterfaceSlice := typ.Elem().Kind() == reflect.Interface
@@ -216,29 +216,44 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 			// this is how append looks w/ reflect
 			v.Set(reflect.Append(v, ev))
 		}
-		return
-	}
 
-	// symbols and tags go into strings
-	if typ.Kind() == reflect.String {
-		switch nn := node.(type) {
-		case SymbolText:
-			ds, derr := descapeString(nn.Text)
-			if derr == nil {
-				v.SetString(ds)
-			} else {
-				v.SetString(nn.Text)
-			}
-		case Tag:
-			v.SetString(string(nn))
-		default:
-			err = errors.New("Trying to store invalid type into string type.")
-			return
+	// symbols, literals, and tags go into strings
+	case reflect.String:
+		s := ""
+		if s, err = getString(node); err == nil {
+			v.SetString(s)
+		} else {
+			err = errors.New("Trying to store invalid type into string field.")
 		}
-		return
+
+	// and into ints
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		s := ""
+		if s, err = getString(node); err == nil {
+			var x int64
+			if x, err = strconv.ParseInt(string(s), 0, 64); err == nil {
+				v.SetInt(x)
+			}
+		} else {
+			err = errors.New("Trying to store invalid type into integer field.")
+		}
+
+	// and also into uints
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		s := ""
+		if s, err = getString(node); err == nil {
+			var x uint64
+			if x, err = strconv.ParseUint(string(s), 0, 64); err == nil {
+				v.SetUint(x)
+			}
+		} else {
+			err = errors.New("Trying to store invalid type into unsigned integer field.")
+		}
+
+	default:
+		err = fmt.Errorf("Unanticipated type: %s.", typ.Name())
 	}
 
-	err = fmt.Errorf("Unanticipated type: %s.", typ.Name())
 	return
 }
 
@@ -272,6 +287,24 @@ func getField(v reflect.Value, field string) (fv reflect.Value, err error) {
 		fv = v
 	} else {
 		fv = v.FieldByName(field)
+	}
+	return
+}
+
+func getString(node Node) (s string, err error) {
+	switch nn := node.(type) {
+	case SymbolText:
+		s = nn.Text
+	case Tag:
+		s = string(nn)
+	case Literal:
+		s = string(nn)
+	default:
+		return "", fmt.Errorf("Expected symbol, tag, or literal, but got %T", node)
+	}
+	ds, derr := descapeString(s)
+	if derr == nil {
+		s = ds
 	}
 	return
 }
