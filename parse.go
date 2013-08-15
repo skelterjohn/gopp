@@ -39,6 +39,7 @@ func Parse(g Grammar, startRule string, document []byte) (ast AST, err error) {
 
 	if err != nil {
 		// TODO: use pd to return informative error messages.
+		err = pd.FarthestErrors[0]
 		return
 	}
 	if len(remaining) != 0 {
@@ -182,13 +183,16 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRul
 	remainingTokens = tokens
 	var myitems []Node
 	first := true
+	var suberr error
 	for {
 		var prns []string
 		if first {
 			prns = parentRuleNames
 			first = false
 		}
-		subitems, subtokens, suberr := t.Term.Parse(g, remainingTokens, pd, prns)
+		var subitems []Node
+		var subtokens []Token
+		subitems, subtokens, suberr = t.Term.Parse(g, remainingTokens, pd, prns)
 		if suberr != nil {
 			break
 		}
@@ -197,7 +201,7 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRul
 	}
 	items = []Node{myitems}
 	if len(items) == 0 {
-		err = errors.New("RepeatOneTerm found zero.")
+		err = suberr
 		pd.ErrorWith(err, tokens)
 	}
 	return
@@ -214,12 +218,12 @@ func (t OptionalTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRule
 		}
 	}()
 
-	subitem, subtokens, suberr := t.Expr.Parse(g, remainingTokens, pd, parentRuleNames)
+	subitems, subtokens, suberr := t.Expr.Parse(g, tokens, pd, parentRuleNames)
 	if suberr != nil {
 		remainingTokens = tokens
 		return
 	}
-	items = append(items, subitem)
+	items = subitems
 	remainingTokens = subtokens
 	return
 }
@@ -295,7 +299,7 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRu
 			pd.AcceptUpTo(remainingTokens)
 			return
 		}
-		err = fmt.Errorf("Could not turn %v into %s.", tokens[0], t.Name)
+		err = fmt.Errorf("Expected %s at %d:%d.", t.Name, tokens[0].Row, tokens[0].Col)
 		pd.ErrorWith(err, tokens)
 		return
 	}
@@ -307,6 +311,7 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRu
 }
 
 func (t TagTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
+	tr.Println(Tag(t.Tag))
 	items = []Node{Tag(t.Tag)}
 	remainingTokens = tokens
 	return
@@ -324,12 +329,12 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleN
 	}()
 
 	if len(tokens) == 0 {
-		err = errors.New("Not enough tokens.")
+		err = fmt.Errorf("Expected %q at EOF.", t.Literal)
 		pd.ErrorWith(err, tokens)
 		return
 	}
 	if tokens[0].Type != "RAW" {
-		err = errors.New("Incorrect literal.")
+		err = fmt.Errorf("Expected %q at %d:%d.", t.Literal, tokens[0].Row, tokens[0].Col)
 		pd.ErrorWith(err, tokens)
 		return
 	}
@@ -345,7 +350,7 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleN
 	}
 
 	if tokens[0].Text != literalText {
-		err = errors.New("Incorrect literal.")
+		err = fmt.Errorf("Expected %q at %d:%d.", t.Literal, tokens[0].Row, tokens[0].Col)
 		pd.ErrorWith(err, tokens)
 		return
 	}
@@ -353,6 +358,7 @@ func (t LiteralTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleN
 	remainingTokens = tokens[1:]
 	pd.AcceptUpTo(remainingTokens)
 	return
+
 }
 
 var _ = strconv.Unquote

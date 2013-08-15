@@ -10,9 +10,10 @@ import (
 )
 
 type Token struct {
-	Type string
-	Raw  string
-	Text string
+	Type     string
+	Raw      string
+	Text     string
+	Row, Col int
 }
 
 func (t Token) String() string {
@@ -25,6 +26,7 @@ type TokenizeInfo struct {
 }
 
 func Tokenize(ti TokenizeInfo, document []byte) (tokens []Token, err error) {
+	var row, col int
 tokenloop:
 	for len(document) != 0 {
 
@@ -55,17 +57,30 @@ tokenloop:
 				continue
 			}
 
+			matchedText := matches[0]
+			capturedText := matches[1]
+
 			token := Token{
 				Type: re.Type,
-				Raw:  string(matches[0]),
+				Raw:  string(matchedText),
+				Row:  row,
+				Col:  col,
 			}
 			if len(matches) > 1 {
-				token.Text = string(matches[1])
+				token.Text = string(capturedText)
 				if err != nil {
 					return
 				}
 			}
-			newdocument = document[len(matches[0]):]
+			for _, c := range matchedText {
+				if c == '\n' {
+					row++
+					col = 0
+				} else {
+					col++
+				}
+			}
+			newdocument = document[len(matchedText):]
 			tokens = append(tokens, token)
 			break
 		}
