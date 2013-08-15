@@ -214,12 +214,12 @@ func (t OptionalTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRule
 		}
 	}()
 
-	subitem, subtokens, suberr := t.Expr.Parse(g, remainingTokens, pd, parentRuleNames)
+	subitems, subtokens, suberr := t.Expr.Parse(g, tokens, pd, parentRuleNames)
 	if suberr != nil {
 		remainingTokens = tokens
 		return
 	}
-	items = append(items, subitem)
+	items = subitems
 	remainingTokens = subtokens
 	return
 }
@@ -307,6 +307,7 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRu
 }
 
 func (t TagTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
+	tr.Println(Tag(t.Tag))
 	items = []Node{Tag(t.Tag)}
 	remainingTokens = tokens
 	return

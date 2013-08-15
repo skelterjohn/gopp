@@ -117,6 +117,10 @@ func (sa StructuredAST) Decode(obj interface{}) (err error) {
 
 var dtr = debugtags.Tracer{Enabled: false}
 
+func SetDTr(enabled bool) {
+	dtr.Enabled = enabled
+}
+
 func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 	name := fmt.Sprintf("%T", v.Interface())
 	dtr.In(name, node)
