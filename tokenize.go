@@ -39,6 +39,10 @@ tokenloop:
 			if len(matches) == 0 {
 				continue
 			}
+			if string(document[:len(matches[0])]) != string(matches[0]) {
+				err = fmt.Errorf("Regexp matched text not at beginning: %s", re)
+				return
+			}
 			document = document[len(matches[0]):]
 			continue tokenloop
 		}
