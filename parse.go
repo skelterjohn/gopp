@@ -94,6 +94,7 @@ func (r Rule) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []
 		if err == nil {
 			tr.Out(rName, items)
 		} else {
+			err = fmt.Errorf("%s => %s", r.Name, err.Error())
 			tr.Out(rName, err)
 		}
 	}()
@@ -235,6 +236,7 @@ func (t RuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleName
 		if err == nil {
 			tr.Out(rName, items)
 		} else {
+			err = fmt.Errorf("<<%s>>: %s", t.Name, err.Error())
 			tr.Out(rName, err)
 		}
 	}()
@@ -270,6 +272,7 @@ func (t InlineRuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRu
 		if err == nil {
 			tr.Out(rName, items)
 		} else {
+			err = fmt.Errorf("<%s>: %s", t.Name, err.Error())
 			tr.Out(rName, err)
 		}
 	}()
