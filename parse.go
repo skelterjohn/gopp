@@ -46,8 +46,14 @@ func Parse(g Grammar, startRule string, document []byte) (ast AST, err error) {
 		err = fmt.Errorf("%s: %s", strings.Join(st, " -> "), pd.FarthestErrors[0].Error())
 		return
 	}
-	if len(remaining) != 0 {
-		err = errors.New("Did not parse entire file.")
+	switch len(remaining) {
+	case 0: // do nothing
+	case 1:
+		err = fmt.Errorf("1 token remaining: %v", remaining[0])
+	case 2, 3:
+		err = fmt.Errorf("%d tokens remaining: %v", len(remaining), remaining)
+	default:
+		err = fmt.Errorf("%d tokens remaining: %v...", len(remaining), remaining[:3])
 	}
 
 	ast = items
