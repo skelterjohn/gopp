@@ -159,10 +159,16 @@ func (lt LiteralTerm) String() string     { return fmt.Sprintf("LiteralTerm(%q)"
 
 func (e Expr) Repr() string {
 	b := bytes.Buffer{}
-	if len(e) > 0 {
-		b.WriteString(e[0].Repr())
+	ew := make(Expr, 0, len(e))
+	for _, t := range e {
+		if _, ok := t.(TagTerm); !ok {
+			ew = append(ew, t)
+		}
 	}
-	for _, t := range e[1:] {
+	if len(ew) > 0 {
+		b.WriteString(ew[0].Repr())
+	}
+	for _, t := range ew[1:] {
 		b.WriteByte(' ')
 		b.WriteString(t.Repr())
 	}
