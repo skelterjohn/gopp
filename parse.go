@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/skelterjohn/debugtags"
 	"strconv"
+	"strings"
 )
 
 func Parse(g Grammar, startRule string, document []byte) (ast AST, err error) {
@@ -38,8 +39,11 @@ func Parse(g Grammar, startRule string, document []byte) (ast AST, err error) {
 	items, remaining, err := start.Parse(g, tokens, pd, []string{})
 
 	if err != nil {
-		// TODO: use pd to return informative error messages.
-		err = pd.FarthestErrors[0]
+		st := make([]string, len(pd.ParseStack))
+		for i, t := range pd.ParseStack {
+			st[i] = t.Repr()
+		}
+		err = fmt.Errorf("%s: %s", strings.Join(st, " -> "), pd.FarthestErrors[0].Error())
 		return
 	}
 	if len(remaining) != 0 {
@@ -65,6 +69,7 @@ type ParseData struct {
 	errored              bool
 	FarthestErrors       []error
 	TokensForError       []Token
+	ParseStack           []Term
 }
 
 func NewParseData() (pd *ParseData) {
@@ -87,14 +92,24 @@ func (pd *ParseData) ErrorWith(err error, remaining []Token) {
 	pd.errored = true
 }
 
+func (pd *ParseData) Push(t Term, err *error) func() {
+	stackLen := len(pd.ParseStack)
+	pd.ParseStack = append(pd.ParseStack, t)
+	return func() {
+		if *err == nil {
+			pd.ParseStack = pd.ParseStack[:stackLen]
+		}
+	}
+}
+
 func (r Rule) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("Rule(%q)", r.Name)
 	tr.In(rName, tokens)
+	defer pd.Push(r, &err)()
 	defer func() {
 		if err == nil {
 			tr.Out(rName, items)
 		} else {
-			err = fmt.Errorf("%s => %s", r.Name, err.Error())
 			tr.Out(rName, err)
 		}
 	}()
@@ -113,6 +128,7 @@ func (r Rule) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []
 func (e Expr) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("Expr")
 	tr.In(rName, tokens)
+	defer pd.Push(e, &err)()
 	defer func() {
 		if err == nil {
 			tr.Out(rName, items)
@@ -142,6 +158,7 @@ func (e Expr) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []
 func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("RepeatZeroTerm")
 	tr.In(rName, tokens)
+	defer pd.Push(t, &err)()
 	defer func() {
 		if err == nil {
 			tr.Out(rName, items)
@@ -173,6 +190,7 @@ func (t RepeatZeroTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRu
 func (t RepeatOneTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("RepeatOneTerm")
 	tr.In(rName, tokens)
+	defer pd.Push(t, &err)()
 	defer func() {
 		if err == nil {
 			tr.Out(rName, items)
@@ -211,6 +229,7 @@ func (t RepeatOneTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRul
 func (t OptionalTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("OptionalTerm")
 	tr.In(rName, tokens)
+	defer pd.Push(t, &err)()
 	defer func() {
 		if err == nil {
 			tr.Out(rName, items)
@@ -232,6 +251,7 @@ func (t OptionalTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRule
 func (t RuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("RuleTerm(%q)", t.Name)
 	tr.In(rName, tokens)
+	defer pd.Push(t, &err)()
 	defer func() {
 		if err == nil {
 			tr.Out(rName, items)
@@ -268,6 +288,7 @@ func (t RuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleName
 func (t InlineRuleTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("InlineRuleTerm(%q)", t.Name)
 	tr.In(rName, tokens)
+	defer pd.Push(t, &err)()
 	defer func() {
 		if err == nil {
 			tr.Out(rName, items)
@@ -323,6 +344,7 @@ func (t TagTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames
 func (t LiteralTerm) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
 	rName := fmt.Sprintf("LiteralTerm(%q)", t.Literal)
 	tr.In(rName, tokens)
+	defer pd.Push(t, &err)()
 	defer func() {
 		if err == nil {
 			tr.Out(rName, items)

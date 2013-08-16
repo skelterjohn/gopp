@@ -5,9 +5,11 @@
 package gopp
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -104,6 +106,10 @@ func (r Rule) String() string {
 	return fmt.Sprintf("Rule(%s:%v)", r.Name, r.Expr)
 }
 
+func (r Rule) Repr() string {
+	return r.Name
+}
+
 type Symbol struct {
 	Name    string
 	Pattern string
@@ -118,9 +124,22 @@ func (e Expr) CollectLiterals(literals map[string]bool) {
 	return
 }
 
+func (e Expr) Repr() string {
+	b := bytes.Buffer{}
+	if len(e) > 0 {
+		b.WriteString(e[0].Repr())
+	}
+	for _, t := range e[1:] {
+		b.WriteByte(' ')
+		b.WriteString(t.Repr())
+	}
+	return b.String()
+}
+
 type Term interface {
 	CollectLiterals(literals map[string]bool)
 	Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error)
+	Repr() string
 }
 
 type RepeatZeroTerm struct {
@@ -131,12 +150,20 @@ func (rzt RepeatZeroTerm) String() string {
 	return fmt.Sprintf("RepeatZeroTerm(%v)", rzt.Term)
 }
 
+func (rzt RepeatZeroTerm) Repr() string {
+	return fmt.Sprintf("%s*", rzt.Term.Repr())
+}
+
 type RepeatOneTerm struct {
 	Term
 }
 
 func (rot RepeatOneTerm) String() string {
 	return fmt.Sprintf("RepeatOneTerm(%v)", rot.Term)
+}
+
+func (rot RepeatOneTerm) Repr() string {
+	return fmt.Sprintf("%s+", rot.Term.Repr())
 }
 
 type OptionalTerm struct {
@@ -147,12 +174,20 @@ func (ot OptionalTerm) String() string {
 	return fmt.Sprintf("OptionalTerm(%v)", ot.Expr)
 }
 
+func (ot OptionalTerm) Repr() string {
+	return fmt.Sprintf("[%v]", ot.Expr.Repr())
+}
+
 type GroupTerm struct {
 	Expr
 }
 
 func (gt GroupTerm) String() string {
 	return fmt.Sprintf("GroupTerm(%v)", gt.Expr)
+}
+
+func (gt GroupTerm) Repr() string {
+	return fmt.Sprintf("(%v)", gt.Expr.Repr())
 }
 
 type noLiterals struct{}
@@ -170,6 +205,10 @@ func (rt RuleTerm) String() string {
 	return fmt.Sprintf("RuleTerm(%s)", rt.Name)
 }
 
+func (rt RuleTerm) Repr() string {
+	return fmt.Sprintf("<<%s>>", rt.Name)
+}
+
 type InlineRuleTerm struct {
 	Name string
 	noLiterals
@@ -177,6 +216,10 @@ type InlineRuleTerm struct {
 
 func (irt InlineRuleTerm) String() string {
 	return fmt.Sprintf("InlineRuleTerm(%s)", irt.Name)
+}
+
+func (irt InlineRuleTerm) Repr() string {
+	return fmt.Sprintf("<%s>", irt.Name)
 }
 
 type TagTerm struct {
@@ -188,12 +231,20 @@ func (tt TagTerm) String() string {
 	return fmt.Sprintf("TagTerm(%q)", tt.Tag)
 }
 
+func (tt TagTerm) Repr() string {
+	return fmt.Sprintf("{%s}", strconv.Quote(tt.Tag)[1:len(tt.Tag)+1])
+}
+
 type LiteralTerm struct {
 	Literal string
 }
 
 func (lt LiteralTerm) String() string {
 	return fmt.Sprintf("LiteralTerm(%q)", lt.Literal)
+}
+
+func (lt LiteralTerm) Repr() string {
+	return fmt.Sprintf("'%s'", strconv.Quote(lt.Literal)[1:len(lt.Literal)+1])
 }
 
 func (l LiteralTerm) CollectLiterals(literals map[string]bool) {
