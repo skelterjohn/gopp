@@ -102,27 +102,60 @@ type Rule struct {
 	Expr
 }
 
-func (r Rule) String() string {
-	return fmt.Sprintf("Rule(%s:%v)", r.Name, r.Expr)
+type Term interface {
+	CollectLiterals(literals map[string]bool)
+	Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error)
+	Repr() string
 }
 
-func (r Rule) Repr() string {
-	return r.Name
-}
+type (
+	Expr []Term
 
-type Symbol struct {
-	Name    string
-	Pattern string
-}
-
-type Expr []Term
-
-func (e Expr) CollectLiterals(literals map[string]bool) {
-	for _, term := range e {
-		term.CollectLiterals(literals)
+	RepeatZeroTerm struct {
+		Term
 	}
-	return
-}
+
+	RepeatOneTerm struct {
+		Term
+	}
+
+	OptionalTerm struct {
+		Expr
+	}
+
+	GroupTerm struct {
+		Expr
+	}
+
+	RuleTerm struct {
+		Name string
+		noLiterals
+	}
+
+	InlineRuleTerm struct {
+		Name string
+		noLiterals
+	}
+
+	TagTerm struct {
+		Tag string
+		noLiterals
+	}
+
+	LiteralTerm struct {
+		Literal string
+	}
+)
+
+func (r Rule) String() string             { return fmt.Sprintf("Rule(%s:%v)", r.Name, r.Expr) }
+func (rzt RepeatZeroTerm) String() string { return fmt.Sprintf("RepeatZeroTerm(%v)", rzt.Term) }
+func (rot RepeatOneTerm) String() string  { return fmt.Sprintf("RepeatOneTerm(%v)", rot.Term) }
+func (ot OptionalTerm) String() string    { return fmt.Sprintf("OptionalTerm(%v)", ot.Expr) }
+func (gt GroupTerm) String() string       { return fmt.Sprintf("GroupTerm(%v)", gt.Expr) }
+func (rt RuleTerm) String() string        { return fmt.Sprintf("RuleTerm(%s)", rt.Name) }
+func (irt InlineRuleTerm) String() string { return fmt.Sprintf("InlineRuleTerm(%s)", irt.Name) }
+func (tt TagTerm) String() string         { return fmt.Sprintf("TagTerm(%q)", tt.Tag) }
+func (lt LiteralTerm) String() string     { return fmt.Sprintf("LiteralTerm(%q)", lt.Literal) }
 
 func (e Expr) Repr() string {
 	b := bytes.Buffer{}
@@ -135,59 +168,16 @@ func (e Expr) Repr() string {
 	}
 	return b.String()
 }
-
-type Term interface {
-	CollectLiterals(literals map[string]bool)
-	Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error)
-	Repr() string
-}
-
-type RepeatZeroTerm struct {
-	Term
-}
-
-func (rzt RepeatZeroTerm) String() string {
-	return fmt.Sprintf("RepeatZeroTerm(%v)", rzt.Term)
-}
-
-func (rzt RepeatZeroTerm) Repr() string {
-	return fmt.Sprintf("%s*", rzt.Term.Repr())
-}
-
-type RepeatOneTerm struct {
-	Term
-}
-
-func (rot RepeatOneTerm) String() string {
-	return fmt.Sprintf("RepeatOneTerm(%v)", rot.Term)
-}
-
-func (rot RepeatOneTerm) Repr() string {
-	return fmt.Sprintf("%s+", rot.Term.Repr())
-}
-
-type OptionalTerm struct {
-	Expr
-}
-
-func (ot OptionalTerm) String() string {
-	return fmt.Sprintf("OptionalTerm(%v)", ot.Expr)
-}
-
-func (ot OptionalTerm) Repr() string {
-	return fmt.Sprintf("[%v]", ot.Expr.Repr())
-}
-
-type GroupTerm struct {
-	Expr
-}
-
-func (gt GroupTerm) String() string {
-	return fmt.Sprintf("GroupTerm(%v)", gt.Expr)
-}
-
-func (gt GroupTerm) Repr() string {
-	return fmt.Sprintf("(%v)", gt.Expr.Repr())
+func (r Rule) Repr() string             { return r.Name }
+func (rzt RepeatZeroTerm) Repr() string { return fmt.Sprintf("%s*", rzt.Term.Repr()) }
+func (rot RepeatOneTerm) Repr() string  { return fmt.Sprintf("%s+", rot.Term.Repr()) }
+func (ot OptionalTerm) Repr() string    { return fmt.Sprintf("[%v]", ot.Expr.Repr()) }
+func (gt GroupTerm) Repr() string       { return fmt.Sprintf("(%v)", gt.Expr.Repr()) }
+func (rt RuleTerm) Repr() string        { return fmt.Sprintf("<<%s>>", rt.Name) }
+func (irt InlineRuleTerm) Repr() string { return fmt.Sprintf("<%s>", irt.Name) }
+func (tt TagTerm) Repr() string         { return fmt.Sprintf("{%s}", strconv.Quote(tt.Tag)[1:len(tt.Tag)+1]) }
+func (lt LiteralTerm) Repr() string {
+	return fmt.Sprintf("'%s'", strconv.Quote(lt.Literal)[1:len(lt.Literal)+1])
 }
 
 type noLiterals struct{}
@@ -196,60 +186,21 @@ func (n noLiterals) CollectLiterals(literals map[string]bool) {
 	return
 }
 
-type RuleTerm struct {
-	Name string
-	noLiterals
-}
-
-func (rt RuleTerm) String() string {
-	return fmt.Sprintf("RuleTerm(%s)", rt.Name)
-}
-
-func (rt RuleTerm) Repr() string {
-	return fmt.Sprintf("<<%s>>", rt.Name)
-}
-
-type InlineRuleTerm struct {
-	Name string
-	noLiterals
-}
-
-func (irt InlineRuleTerm) String() string {
-	return fmt.Sprintf("InlineRuleTerm(%s)", irt.Name)
-}
-
-func (irt InlineRuleTerm) Repr() string {
-	return fmt.Sprintf("<%s>", irt.Name)
-}
-
-type TagTerm struct {
-	Tag string
-	noLiterals
-}
-
-func (tt TagTerm) String() string {
-	return fmt.Sprintf("TagTerm(%q)", tt.Tag)
-}
-
-func (tt TagTerm) Repr() string {
-	return fmt.Sprintf("{%s}", strconv.Quote(tt.Tag)[1:len(tt.Tag)+1])
-}
-
-type LiteralTerm struct {
-	Literal string
-}
-
-func (lt LiteralTerm) String() string {
-	return fmt.Sprintf("LiteralTerm(%q)", lt.Literal)
-}
-
-func (lt LiteralTerm) Repr() string {
-	return fmt.Sprintf("'%s'", strconv.Quote(lt.Literal)[1:len(lt.Literal)+1])
+func (e Expr) CollectLiterals(literals map[string]bool) {
+	for _, term := range e {
+		term.CollectLiterals(literals)
+	}
+	return
 }
 
 func (l LiteralTerm) CollectLiterals(literals map[string]bool) {
 	literals[l.Literal] = true
 	return
+}
+
+type Symbol struct {
+	Name    string
+	Pattern string
 }
 
 type AST []Node
