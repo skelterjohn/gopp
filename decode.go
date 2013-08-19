@@ -212,6 +212,14 @@ func (sa StructuredAST) decode(node Node, v reflect.Value) (err error) {
 					return
 				}
 			} else {
+				// temporarily shadow ev, leaving the thing to be put back in the slice alone.
+				ev := ev
+				for ev.Type().Kind() == reflect.Ptr {
+					pv := ev
+					newthing := reflect.New(pv.Type().Elem())
+					pv.Set(newthing)
+					ev = pv.Elem()
+				}
 				err = sa.decode(n, ev)
 				if err != nil {
 					return
