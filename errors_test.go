@@ -30,8 +30,8 @@ Start => 'x' 'y' 'z'
 `,
 		Cases: []ErrorCase{
 			ErrorCase{`xyz`, ``},
-			ErrorCase{`xzy`, `Start -> 'x' 'y' 'z' -> 'y': Expected "y" at 0:1.`},
-			ErrorCase{`x`, `Start -> 'x' 'y' 'z' -> 'y': Expected "y" at EOF.`},
+			ErrorCase{`xzy`, `Expected "y" at 0:1.`},
+			ErrorCase{`x`, `Expected "y" at EOF.`},
 		},
 	},
 }

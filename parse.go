@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/skelterjohn/debugtags"
 	"strconv"
-	"strings"
 )
 
 func Parse(g Grammar, startRule string, document []byte) (ast AST, err error) {
@@ -43,7 +42,7 @@ func Parse(g Grammar, startRule string, document []byte) (ast AST, err error) {
 		for i, t := range pd.ParseStack {
 			st[i] = t.Repr()
 		}
-		err = fmt.Errorf("%s: %s", strings.Join(st, " -> "), pd.FarthestErrors[0].Error())
+		err = ParseError{pd}
 		return
 	}
 	switch len(remaining) {
@@ -106,6 +105,14 @@ func (pd *ParseData) Push(t Term, err *error) func() {
 			pd.ParseStack = pd.ParseStack[:stackLen]
 		}
 	}
+}
+
+type ParseError struct {
+	Pd *ParseData
+}
+
+func (err ParseError) Error() string {
+	return err.Pd.FarthestErrors[0].Error()
 }
 
 func (r Rule) Parse(g Grammar, tokens []Token, pd *ParseData, parentRuleNames []string) (items []Node, remainingTokens []Token, err error) {
