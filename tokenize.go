@@ -58,7 +58,6 @@ tokenloop:
 			}
 
 			matchedText := matches[0]
-			capturedText := matches[1]
 
 			token := Token{
 				Type: re.Type,
@@ -67,7 +66,7 @@ tokenloop:
 				Col:  col,
 			}
 			if len(matches) > 1 {
-				token.Text = string(capturedText)
+				token.Text = string(matches[1])
 				if err != nil {
 					return
 				}
